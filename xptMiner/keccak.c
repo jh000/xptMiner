@@ -92,17 +92,19 @@ extern "C"{
  * By default, we select the 64-bit implementation if a 64-bit type
  * is available, unless a 32-bit x86 is detected.
  */
-#if !defined SPH_KECCAK_64 && SPH_64 \
-	&& !(defined __i386__ || SPH_I386_GCC || SPH_I386_MSVC)
+//#if !defined SPH_KECCAK_64 && SPH_64 \
+//	&& !(defined __i386__ || SPH_I386_GCC || SPH_I386_MSVC)
+//#define SPH_KECCAK_64   1
+//#endif
 #define SPH_KECCAK_64   1
-#endif
 
 /*
  * If using a 32-bit implementation, we prefer to interleave.
  */
-#if !SPH_KECCAK_64 && !defined SPH_KECCAK_INTERLEAVE
-#define SPH_KECCAK_INTERLEAVE   1
-#endif
+//#if !SPH_KECCAK_64 && !defined SPH_KECCAK_INTERLEAVE
+//#define SPH_KECCAK_INTERLEAVE   1
+//#endif
+#define SPH_KECCAK_INTERLEAVE   0
 
 /*
  * Unroll 8 rounds on big systems, 2 rounds on small systems.
@@ -131,7 +133,7 @@ extern "C"{
 #pragma warning (disable: 4146)
 #endif
 
-#if SPH_KECCAK_64
+#if 1 // SPH_KECCAK_64 -> Force usage of 64bit integers
 
 static const sph_u64 RC[] = {
 	SPH_C64(0x0000000000000001), SPH_C64(0x0000000000008082),
@@ -1565,14 +1567,13 @@ keccak_init(sph_keccak_context *kc, unsigned out_size)
 	kc->lim = 200 - (out_size >> 2);
 }
 
-static void
-keccak_core(sph_keccak_context *kc, const void *data, size_t len, size_t lim)
+static void keccak_core(sph_keccak_context *kc, const void *data, size_t len, size_t lim)
 {
 	unsigned char *buf;
 	size_t ptr;
 	DECL_STATE
 
-	buf = kc->buf;
+		buf = kc->buf;
 	ptr = kc->ptr;
 
 	if (len < (lim - ptr)) {
@@ -1600,6 +1601,246 @@ keccak_core(sph_keccak_context *kc, const void *data, size_t len, size_t lim)
 	}
 	WRITE_STATE(kc);
 	kc->ptr = ptr;
+}
+
+void keccak_core_prepare(sph_keccak512_context *kc, const void *data, unsigned long long *stateOut)
+{
+	unsigned char *buf;
+	unsigned char *dataU8 = (unsigned char*)data;
+	size_t ptr;
+	DECL_STATE
+		int len = 80;
+	size_t clen;
+	// vars for close
+	unsigned eb;
+	//union {
+	//	unsigned char tmp[72 + 1];
+	//	sph_u64 dummy;   /* for alignment */
+	//} u;
+	size_t j;
+	int i;
+	buf = kc->buf;
+	//READ_STATE(kc);
+	a00 = kc->u.wide[ 0]; 
+	a10 = kc->u.wide[ 1]; 
+	a20 = kc->u.wide[ 2]; 
+	a30 = kc->u.wide[ 3]; 
+	a40 = kc->u.wide[ 4]; 
+	a01 = kc->u.wide[ 5]; 
+	a11 = kc->u.wide[ 6]; 
+	a21 = kc->u.wide[ 7]; 
+	a31 = kc->u.wide[ 8]; 
+	a41 = kc->u.wide[ 9]; 
+	a02 = kc->u.wide[10]; 
+	a12 = kc->u.wide[11]; 
+	a22 = kc->u.wide[12]; 
+	a32 = kc->u.wide[13]; 
+	a42 = kc->u.wide[14]; 
+	a03 = kc->u.wide[15]; 
+	a13 = kc->u.wide[16]; 
+	a23 = kc->u.wide[17]; 
+	a33 = kc->u.wide[18]; 
+	a43 = kc->u.wide[19]; 
+	a04 = kc->u.wide[20]; 
+	a14 = kc->u.wide[21]; 
+	a24 = kc->u.wide[22]; 
+	a34 = kc->u.wide[23]; 
+	a44 = kc->u.wide[24];
+	//memcpy(buf, data, 72);
+	//INPUT_BUF(72);
+	a00 ^= sph_dec64le_aligned(dataU8 +   0);
+	a10 ^= sph_dec64le_aligned(dataU8 +   8);
+	a20 ^= sph_dec64le_aligned(dataU8 +  16);
+	a30 ^= sph_dec64le_aligned(dataU8 +  24);
+	a40 ^= sph_dec64le_aligned(dataU8 +  32);
+	a01 ^= sph_dec64le_aligned(dataU8 +  40);
+	a11 ^= sph_dec64le_aligned(dataU8 +  48);
+	a21 ^= sph_dec64le_aligned(dataU8 +  56);
+	a31 ^= sph_dec64le_aligned(dataU8 +  64); 
+	// KECCAK_F_1600;
+	for (i = 0; i < 24; i += 8)
+	{ 
+		KF_ELT( 0,  1, RC[i + 0]); 
+		KF_ELT( 1,  2, RC[i + 1]); 
+		KF_ELT( 2,  3, RC[i + 2]); 
+		KF_ELT( 3,  4, RC[i + 3]); 
+		KF_ELT( 4,  5, RC[i + 4]); 
+		KF_ELT( 5,  6, RC[i + 5]); 
+		KF_ELT( 6,  7, RC[i + 6]); 
+		KF_ELT( 7,  8, RC[i + 7]); 
+		P8_TO_P0; 
+	}
+
+	// moved from keccak_core_opt() second pass to here
+	a10 ^= 0x1;
+	a31 ^= 0x8000000000000000ULL;
+
+	stateOut[0] = a00;
+	stateOut[1] = a10;
+	stateOut[2] = a20;
+	stateOut[3] = a30;
+	stateOut[4] = a40;
+	stateOut[5] = a01;
+	stateOut[6] = a11;
+	stateOut[7] = a21;
+	stateOut[8] = a31;
+	stateOut[9] = a41;
+	stateOut[10] = a02;
+	stateOut[11] = a12;
+	stateOut[12] = a22;
+	stateOut[13] = a32;
+	stateOut[14] = a42;
+	stateOut[15] = a03;
+	stateOut[16] = a13;
+	stateOut[17] = a23;
+	stateOut[18] = a33;
+	stateOut[19] = a43;
+	stateOut[20] = a04;
+	stateOut[21] = a14;
+	stateOut[22] = a24;
+	stateOut[23] = a34;
+	stateOut[24] = a44;
+}
+//
+//void keccak_core_opt(sph_keccak512_context *kc, const void *data, void* dst)
+//{
+//	unsigned char *buf;
+//	unsigned char *dataU8 = (unsigned char*)data;
+//	size_t ptr;
+//	DECL_STATE
+//	int len = 80;
+//	size_t clen;
+//	// vars for close
+//	unsigned eb;
+//	//union {
+//	//	unsigned char tmp[72 + 1];
+//	//	sph_u64 dummy;   /* for alignment */
+//	//} u;
+//	size_t j;
+//	int i;
+//	buf = kc->buf;
+//	//READ_STATE(kc);
+//	a00 = kc->u.wide[ 0]; 
+//	a10 = kc->u.wide[ 1]; 
+//	a20 = kc->u.wide[ 2]; 
+//	a30 = kc->u.wide[ 3]; 
+//	a40 = kc->u.wide[ 4]; 
+//	a01 = kc->u.wide[ 5]; 
+//	a11 = kc->u.wide[ 6]; 
+//	a21 = kc->u.wide[ 7]; 
+//	a31 = kc->u.wide[ 8]; 
+//	a41 = kc->u.wide[ 9]; 
+//	a02 = kc->u.wide[10]; 
+//	a12 = kc->u.wide[11]; 
+//	a22 = kc->u.wide[12]; 
+//	a32 = kc->u.wide[13]; 
+//	a42 = kc->u.wide[14]; 
+//	a03 = kc->u.wide[15]; 
+//	a13 = kc->u.wide[16]; 
+//	a23 = kc->u.wide[17]; 
+//	a33 = kc->u.wide[18]; 
+//	a43 = kc->u.wide[19]; 
+//	a04 = kc->u.wide[20]; 
+//	a14 = kc->u.wide[21]; 
+//	a24 = kc->u.wide[22]; 
+//	a34 = kc->u.wide[23]; 
+//	a44 = kc->u.wide[24];
+//	//memcpy(buf, data, 72);
+//	//INPUT_BUF(72);
+//	a00 ^= sph_dec64le_aligned(dataU8 +   0);
+//	a10 ^= sph_dec64le_aligned(dataU8 +   8);
+//	a20 ^= sph_dec64le_aligned(dataU8 +  16);
+//	a30 ^= sph_dec64le_aligned(dataU8 +  24);
+//	a40 ^= sph_dec64le_aligned(dataU8 +  32);
+//	a01 ^= sph_dec64le_aligned(dataU8 +  40);
+//	a11 ^= sph_dec64le_aligned(dataU8 +  48);
+//	a21 ^= sph_dec64le_aligned(dataU8 +  56);
+//	a31 ^= sph_dec64le_aligned(dataU8 +  64); 
+//	// KECCAK_F_1600;
+//	for (i = 0; i < 24; i += 8)
+//	{ 
+//		KF_ELT( 0,  1, RC[i + 0]); 
+//		KF_ELT( 1,  2, RC[i + 1]); 
+//		KF_ELT( 2,  3, RC[i + 2]); 
+//		KF_ELT( 3,  4, RC[i + 3]); 
+//		KF_ELT( 4,  5, RC[i + 4]); 
+//		KF_ELT( 5,  6, RC[i + 5]); 
+//		KF_ELT( 6,  7, RC[i + 6]); 
+//		KF_ELT( 7,  8, RC[i + 7]); 
+//		P8_TO_P0; 
+//	}
+//	// pass 2
+//	memcpy(buf, (const unsigned char *)data+72, 72);
+//	INPUT_BUF(72);
+//	KECCAK_F_1600;
+//	WRITE_STATE(kc);
+//	/* Finalize the "lane complement" */ 
+//	kc->u.wide[ 1] = ~kc->u.wide[ 1]; 
+//	kc->u.wide[ 2] = ~kc->u.wide[ 2]; 
+//	kc->u.wide[ 8] = ~kc->u.wide[ 8]; 
+//	kc->u.wide[12] = ~kc->u.wide[12]; 
+//	kc->u.wide[17] = ~kc->u.wide[17]; 
+//	kc->u.wide[20] = ~kc->u.wide[20]; 
+//	for (j = 0; j < 64; j += 8) 
+//		sph_enc64le_aligned(((unsigned char*)dst) + j, kc->u.wide[j >> 3]); 
+//	//memcpy(dst, u.tmp, 64);  
+//}
+
+
+void keccak_core_opt(sph_keccak512_context *kc, unsigned long long* keccakPre, unsigned long long w1, void* dst)
+{
+	unsigned char *buf;
+	//unsigned char *dataU8 = (unsigned char*)data + 72;
+	size_t ptr;
+	DECL_STATE
+	int len = 80;
+	size_t clen;
+	// vars for close
+	unsigned eb;
+	size_t j;
+	int i;
+	buf = kc->buf;
+	//READ_STATE(kc);
+	a00 = keccakPre[ 0]; 
+	a10 = keccakPre[ 1]; 
+	a20 = keccakPre[ 2]; 
+	a30 = keccakPre[ 3]; 
+	a40 = keccakPre[ 4]; 
+	a01 = keccakPre[ 5]; 
+	a11 = keccakPre[ 6]; 
+	a21 = keccakPre[ 7]; 
+	a31 = keccakPre[ 8]; 
+	a41 = keccakPre[ 9]; 
+	a02 = keccakPre[10]; 
+	a12 = keccakPre[11]; 
+	a22 = keccakPre[12]; 
+	a32 = keccakPre[13]; 
+	a42 = keccakPre[14]; 
+	a03 = keccakPre[15]; 
+	a13 = keccakPre[16]; 
+	a23 = keccakPre[17]; 
+	a33 = keccakPre[18]; 
+	a43 = keccakPre[19]; 
+	a04 = keccakPre[20]; 
+	a14 = keccakPre[21]; 
+	a24 = keccakPre[22]; 
+	a34 = keccakPre[23]; 
+	a44 = keccakPre[24];
+	// pass 2
+	//memcpy(buf, (const unsigned char *)data+72, 72);
+	a00 ^= w1;//sph_dec64le_aligned(dataU8 +   0);
+
+	KECCAK_F_1600;
+	WRITE_STATE(kc);
+	/* Finalize the "lane complement" */ 
+	kc->u.wide[ 1] = ~kc->u.wide[ 1]; 
+	kc->u.wide[ 2] = ~kc->u.wide[ 2]; 
+	kc->u.wide[ 8] = ~kc->u.wide[ 8]; 
+	kc->u.wide[12] = ~kc->u.wide[12]; 
+	kc->u.wide[17] = ~kc->u.wide[17]; 
+	kc->u.wide[20] = ~kc->u.wide[20]; 
+	for (j = 0; j < 64; j += 8) 
+		sph_enc64le_aligned(((unsigned char*)dst) + j, kc->u.wide[j >> 3]); 
 }
 
 #if SPH_KECCAK_64
@@ -1817,7 +2058,6 @@ sph_keccak512_addbits_and_close(void *cc, unsigned ub, unsigned n, void *dst)
 {
 	keccak_close64(cc, ub, n, dst);
 }
-
 
 #ifdef __cplusplus
 }

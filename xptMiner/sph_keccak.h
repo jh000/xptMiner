@@ -286,6 +286,10 @@ void sph_keccak512_close(void *cc, void *dst);
 void sph_keccak512_addbits_and_close(
 	void *cc, unsigned ub, unsigned n, void *dst);
 
+// optimized routines
+void keccak_core_prepare(sph_keccak512_context *kc, const void *data, unsigned long long *stateOut);
+void keccak_core_opt(sph_keccak512_context *kc, unsigned long long* keccakPre, unsigned long long w1, void* dst);
+
 #ifdef __cplusplus
 }
 #endif

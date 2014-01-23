@@ -1748,7 +1748,7 @@ void
 sph_shavite512_close(void *cc, void *dst)
 {
 	shavite_big_close(cc, 0, 0, dst, 16);
-	shavite_big_init(cc, IV512);
+	// shavite_big_init(cc, IV512);
 }
 
 /* see sph_shavite.h */
