@@ -78,7 +78,7 @@ bool xptClient_processPacket_blockData1(xptClient_t* xptClient)
 		// The first hash in xptClient->blockWorkInfo.txHashes is reserved for the coinbase transaction
 	}
 	xptClient->blockWorkInfo.timeWork = time(NULL);
-	xptClient->blockWorkInfo.timeBias = (uint32)time(NULL) - xptClient->blockWorkInfo.nTime;
+	xptClient->blockWorkInfo.timeBias = xptClient->blockWorkInfo.nTime - (uint32)time(NULL);
 	xptClient->hasWorkData = true;
 	// add general block info (primecoin new pow for xpt v4, removed in xpt v5)
 	//EnterCriticalSection(&xptClient->cs_workAccess);
