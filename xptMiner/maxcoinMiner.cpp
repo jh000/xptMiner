@@ -257,25 +257,8 @@ void maxcoinMiner_openCL_generateOrUpdateKernel()
 
 	char* kernel_src = (char*)malloc(1024*512);
 	strcpy(kernel_src, "");
-	// init header
-
-	//strcat(kernel_src, "#pragma OPENCL EXTENSION cl_khr_global_int32_base_atomics : enable\r\n");
-	//strcat(kernel_src, "#pragma OPENCL EXTENSION cl_khr_local_int32_base_atomics : enable\r\n");
-	//strcat(kernel_src, "#pragma OPENCL EXTENSION cl_khr_global_int32_extended_atomics : enable\r\n");
-	//strcat(kernel_src, "#pragma OPENCL EXTENSION cl_khr_local_int32_extended_atomics : enable\r\n");
 
 	cl_int clerr = 0;
-	//gpuCL.numSegments = 64*4;
-	//gpuCL.sizeSegment = 16*1024;
-	//gpuCL.workgroupNum = 16;
-	//gpuCL.numSegments = 256;
-	//gpuCL.sizeSegment = 1*(1024);
-	//sieveSize = 0xC000/3; // todo: Replace with dynamic OpenCL shared memory size
-	//gpuCL.sieveMaskSize = (sieveSize+7)/8;
-
-	//gpuCL.candidatesPerT = 16;
-	//gpuCL.buffer_candidateList = (uint32*)malloc(gpuCL.candidatesPerT*gpuCL.numSegments*gpuCL.workgroupNum*sizeof(uint32));
-	
 	// init input buffer
 	maxcoinGPU.buffer_blockInputData = malloc(80+8); // endian swapped block data + share target attached at the end
 	memset(maxcoinGPU.buffer_blockInputData, 0x00, 80+8);
@@ -307,27 +290,18 @@ void maxcoinMiner_openCL_generateOrUpdateKernel()
 	"nonceAndBits += 0x100000000UL;\r\n"
 	"}\r\n");
 
-	//strcat(kernel_src, 
-	//	//"nonceIndexOut[0] = ((unsigned int*)blockData)[0];"
-	//	//"nonceIndexOut[0] = 0x100;\r\n"
-	//	"nonceIndexOut[0] = blockData[0];\r\n"
-	////	//"nonceIndexOut[1] = ((unsigned int*)blockData)[1];"
-
-	//	);
-
 	strcat(kernel_src, "}\r\n");
 
 	const char* source = kernel_src;
 	size_t src_size = strlen(kernel_src);
 	cl_program program = clCreateProgramWithSource(openCL_getActiveContext(), 1, &source, &src_size, &clerr);
 	if(clerr != CL_SUCCESS)
-		printf("Error creating OpenCL program\n");//__debugbreak(); // error handling todo
-
-	// Builds the program
+		printf("Error creating OpenCL program\n");
+	// builds the program
 	clerr = clBuildProgram(program, 1, openCL_getActiveDeviceID(), NULL, NULL, NULL);
 	if(clerr != CL_SUCCESS)
-		printf("Error compiling OpenCL program\n");//__debugbreak(); // error handling todo
-	// Shows the log
+		printf("Error compiling OpenCL program\n");
+	// shows the log
 	char* build_log;
 	size_t log_size;
 	// First call to know the proper size
@@ -342,32 +316,8 @@ void maxcoinMiner_openCL_generateOrUpdateKernel()
 
 	maxcoinGPU.kernel_keccak = clCreateKernel(program, "xptMiner_cl_maxcoin_keccak", &clerr);
 
-
-
-
-	// 0	unsigned char *maskC1
-	// 1	unsigned char *maskC2
-	// 2	unsigned char *maskBT
-	// 3	unsigned int *vPrimes
-	// 4	unsigned int *fixedInverseBase
-	// 5	unsigned int* vPrimesTwoInverse
-	// 6	unsigned int vPrimesSize
-
-
-
 	clerr = clSetKernelArg(maxcoinGPU.kernel_keccak, 0, sizeof(cl_mem), &maxcoinGPU.clBuffer_blockInputData);
 	clerr = clSetKernelArg(maxcoinGPU.kernel_keccak, 1, sizeof(cl_mem), &maxcoinGPU.clBuffer_nonceOutputData);
-	//clerr = clSetKernelArg(gpuCL.kernel_sievePrimes, 2, sizeof(cl_mem), &gpuCL.buffer_maskBT);
-	//clerr = clSetKernelArg(gpuCL.kernel_sievePrimes, 0, sizeof(cl_mem), NULL);
-	//clerr = clSetKernelArg(gpuCL.kernel_sievePrimes, 1, sizeof(cl_mem), NULL);
-	//clerr = clSetKernelArg(gpuCL.kernel_sievePrimes, 2, sizeof(cl_mem), NULL);
-
-
-	/*clerr = clSetKernelArg(gpuCL.kernel_sievePrimes, 0, sizeof(cl_mem), &gpuCL.mem_candidateList);
-	clerr = clSetKernelArg(gpuCL.kernel_sievePrimes, 1, sizeof(cl_mem), &gpuCL.buffer_primes);
-	clerr = clSetKernelArg(gpuCL.kernel_sievePrimes, 2, sizeof(cl_mem), &gpuCL.buffer_twoInverse);
-	clerr = clSetKernelArg(gpuCL.kernel_sievePrimes, 3, sizeof(cl_mem), &gpuCL.buffer_primeBase);*/
-
 
 	free(kernel_src);
 }
@@ -408,9 +358,7 @@ void xptMiner_submitShare_test(minerMaxcoinBlock_t* block)
 
 void maxcoin_processGPU(minerMaxcoinBlock_t* block)
 {
-	memset(block, 0x00, 80); // debug
-
-
+	//memset(block, 0x00, 80); // debug
 	if( GetAsyncKeyState(VK_ESCAPE) )
 		ExitProcess(0);
 	// write endian swapped data to block data buffer
@@ -426,35 +374,22 @@ void maxcoin_processGPU(minerMaxcoinBlock_t* block)
 	clerr = clEnqueueWriteBuffer(openCL_getActiveCommandQueue(), maxcoinGPU.clBuffer_blockInputData, true, 0, 80+8, blockDataBE, 0, NULL, NULL);
 
 	size_t work_dim[1];
-	//work_dim[0] = gpuCL.numSegments;
-	//size_t work_size[1];
-	//work_size[0] = min(32, gpuCL.numSegments);
-
 
 	work_dim[0] = 1 * 128;
 	size_t work_size[1];
 	work_size[0] = work_dim[0];//min(1, work_dim[0]);
 
 	cl_event event_kernelExecute;
-	uint32 nTime = GetTickCount();
-
-	/*clerr = clSetKernelArg(gpuCL.kernel_sievePrimes, 4, sizeof(cl_int), &primeRangeStart);
-	clerr = clSetKernelArg(gpuCL.kernel_sievePrimes, 5, sizeof(cl_int), &primeRangeWidth);
-	uint32 maxPrimes = primeRangeWidth * work_dim[0];
-	clerr = clSetKernelArg(gpuCL.kernel_sievePrimes, 6, sizeof(cl_int), &maxPrimes);*/
-	//clerr = clSetKernelArg(maxcoinGPU.kernel_keccak, 0, sizeof(cl_mem), &maxcoinGPU.clBuffer_blockInputData);
-	//clerr = clSetKernelArg(maxcoinGPU.kernel_keccak, 1, sizeof(cl_mem), &maxcoinGPU.clBuffer_nonceOutputData);
 
 	clerr = clEnqueueNDRangeKernel(openCL_getActiveCommandQueue(), maxcoinGPU.kernel_keccak, 1, NULL, work_dim, work_size, 0, NULL, &event_kernelExecute);
-	
 	clerr = clEnqueueReadBuffer(openCL_getActiveCommandQueue(), maxcoinGPU.clBuffer_nonceOutputData, true, 0, 256*4*4, maxcoinGPU.buffer_nonceOutputData, 0, NULL, NULL);
 	uint32* resultNonces = (uint32*)(maxcoinGPU.buffer_nonceOutputData);
 	for(uint32 i=0; i<work_dim[0]; i++)
 	{
 		if( resultNonces[i] != 0xFFFFFFFF )
 		{
-			block->nonce = maxcoin_swapEndianU32(resultNonces[i]);
-			//block->nonce = *(uint32*)(maxcoinGPU.buffer_nonceOutputData);
+			block->nonce = resultNonces[i];
+			block->nonce = *(uint32*)(maxcoinGPU.buffer_nonceOutputData);
 			xptMiner_submitShare_test(block);	
 		}
 	}
