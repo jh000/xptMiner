@@ -113,6 +113,7 @@ typedef struct
 #define ALGORITHM_PRIME			3
 #define ALGORITHM_PROTOSHARES	4
 #define ALGORITHM_METISCOIN		5
+#define ALGORITHM_MAXCOIN		6
 
 // xpt general
 xptServer_t* xptServer_create(uint16 port);

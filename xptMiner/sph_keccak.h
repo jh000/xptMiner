@@ -286,9 +286,13 @@ void sph_keccak512_close(void *cc, void *dst);
 void sph_keccak512_addbits_and_close(
 	void *cc, unsigned ub, unsigned n, void *dst);
 
-// optimized routines
+// optimized routines for metiscoin
 void keccak_core_prepare(sph_keccak512_context *kc, const void *data, unsigned long long *stateOut);
-void keccak_core_opt(sph_keccak512_context *kc, unsigned long long* keccakPre, unsigned long long w1, void* dst);
+void keccak_core_opt(sph_keccak512_context *kc, unsigned long long* keccakPre, unsigned long long w1, unsigned long long* dst);
+
+// optimized routines for maxcoin
+unsigned long long keccak256_maxcoin_opt_v(const unsigned long long *data);
+
 
 #ifdef __cplusplus
 }

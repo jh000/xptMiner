@@ -17,6 +17,7 @@ SOCKET xptClient_openConnection(char *IP, int Port)
 	int result = connect(s,(SOCKADDR*)&addr,sizeof(SOCKADDR_IN));
 	if( result )
 	{
+		closesocket(s);
 		return SOCKET_ERROR;
 	}
 	return s;
@@ -380,7 +381,7 @@ void xptClient_sendShare(xptClient_t* xptClient, xptShareToSubmit_t* xptShareToS
 		xptPacketbuffer_writeU8(xptClient->sendBuffer, &sendError, xptShareToSubmit->chainMultiplierSize);
 		xptPacketbuffer_writeData(xptClient->sendBuffer, xptShareToSubmit->chainMultiplier, xptShareToSubmit->chainMultiplierSize, &sendError);
 	}
-	else if( xptShareToSubmit->algorithm == ALGORITHM_SHA256 || xptShareToSubmit->algorithm == ALGORITHM_SCRYPT || xptShareToSubmit->algorithm == ALGORITHM_METISCOIN )
+	else if( xptShareToSubmit->algorithm == ALGORITHM_SHA256 || xptShareToSubmit->algorithm == ALGORITHM_SCRYPT || xptShareToSubmit->algorithm == ALGORITHM_METISCOIN || xptShareToSubmit->algorithm == ALGORITHM_MAXCOIN )
 	{
 		// original merkleroot (used to identify work)
 		xptPacketbuffer_writeData(xptClient->sendBuffer, xptShareToSubmit->merkleRootOriginal, 32, &sendError);

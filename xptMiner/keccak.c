@@ -1787,7 +1787,7 @@ void keccak_core_prepare(sph_keccak512_context *kc, const void *data, unsigned l
 //}
 
 
-void keccak_core_opt(sph_keccak512_context *kc, unsigned long long* keccakPre, unsigned long long w1, void* dst)
+void keccak_core_opt(sph_keccak512_context *kc, unsigned long long* keccakPre, unsigned long long w1, unsigned long long* dst)
 {
 	unsigned char *buf;
 	//unsigned char *dataU8 = (unsigned char*)data + 72;
@@ -1797,9 +1797,32 @@ void keccak_core_opt(sph_keccak512_context *kc, unsigned long long* keccakPre, u
 	size_t clen;
 	// vars for close
 	unsigned eb;
-	size_t j;
+	int j;
 	int i;
+	unsigned long long t;
+
 	buf = kc->buf;
+	
+	//w1 &= ~0xFFFFFFFFULL;
+
+	//if( (w1>>32) == 0 )
+	//{
+	//	unsigned char* emptyData = (unsigned char*)malloc(sizeof(unsigned char)*25);
+	//	keccakPre = (unsigned long long*)emptyData;
+	//	memset(keccakPre, 0x00, sizeof(unsigned long long)*25);
+	//}
+	//else if( (w1>>32) == 1 )
+	//{
+	//	//memset(keccakPre, 0x00, sizeof(unsigned long long)*25);
+	//	w1 &= 0xFFFFFFFFULL;
+	//}
+	//else if( (w1>>32) == 2 )
+	//{
+	//	//memset(keccakPre, 0x00, sizeof(unsigned long long)*25);
+	//	w1 &= 0xFFFFFFFFULL;
+	//	w1 |= 0x100000000ULL;
+	//}
+
 	//READ_STATE(kc);
 	a00 = keccakPre[ 0]; 
 	a10 = keccakPre[ 1]; 
@@ -1830,17 +1853,100 @@ void keccak_core_opt(sph_keccak512_context *kc, unsigned long long* keccakPre, u
 	//memcpy(buf, (const unsigned char *)data+72, 72);
 	a00 ^= w1;//sph_dec64le_aligned(dataU8 +   0);
 
-	KECCAK_F_1600;
-	WRITE_STATE(kc);
+	//KECCAK_F_1600;
+	for (j = 0; j < 24; j += 4)
+	{
+		KF_ELT( 0,  1, RC[j + 0]);
+		KF_ELT( 1,  2, RC[j + 1]);
+		KF_ELT( 2,  3, RC[j + 2]);
+		KF_ELT( 3,  4, RC[j + 3]);
+//#define KF_ELT(r, s, k)   do { \
+//	THETA LPAR P ## r RPAR; \
+//	RHO LPAR P ## r RPAR; \
+//	KHI LPAR P ## s RPAR; \
+//	IOTA(k); \
+//		} while (0)
+		//THETA LPAR P ## r RPAR;
+		//RHO LPAR P ## r RPAR;
+		//KHI LPAR P ## s RPAR;
+		//IOTA(k);
+		//
+		// P4_TO_P0;
+		//DECL64(t);
+		MOV64(t, a01);
+		MOV64(a01, a12);
+		MOV64(a12, a11);
+		MOV64(a11, a04);
+		MOV64(a04, a43);
+		MOV64(a43, a44);
+		MOV64(a44, t);
+		MOV64(t, a02);
+		MOV64(a02, a24);
+		MOV64(a24, a22);
+		MOV64(a22, a03);
+		MOV64(a03, a31);
+		MOV64(a31, a33);
+		MOV64(a33, t);
+		MOV64(t, a10);
+		MOV64(a10, a42);
+		MOV64(a42, a32);
+		MOV64(a32, a40);
+		MOV64(a40, a13);
+		MOV64(a13, a23);
+		MOV64(a23, t);
+		MOV64(t, a14);
+		MOV64(a14, a30);
+		MOV64(a30, a21);
+		MOV64(a21, a41);
+		MOV64(a41, a20);
+		MOV64(a20, a34);
+		MOV64(a34, t);
+	}
+	
+	// WRITE_STATE(kc);
+	//unsigned long long *dstU64 = (unsigned long long*)dst;
+	dst[0] = a00;
+	dst[1] = ~a10;
+	dst[2] = ~a20;
+	dst[3] = a30;
+	dst[4] = a40;
+	dst[5] = a01;
+	dst[6] = a11;
+	dst[7] = a21;
+	/*(state)->u.wide[ 0] = a00;
+	(state)->u.wide[ 1] = a10;
+	(state)->u.wide[ 2] = a20;
+	(state)->u.wide[ 3] = a30;
+	(state)->u.wide[ 4] = a40;
+	(state)->u.wide[ 5] = a01;
+	(state)->u.wide[ 6] = a11;
+	(state)->u.wide[ 7] = a21;
+	(state)->u.wide[ 8] = a31;
+	(state)->u.wide[ 9] = a41;
+	(state)->u.wide[10] = a02;
+	(state)->u.wide[11] = a12;
+	(state)->u.wide[12] = a22;
+	(state)->u.wide[13] = a32;
+	(state)->u.wide[14] = a42;
+	(state)->u.wide[15] = a03;
+	(state)->u.wide[16] = a13;
+	(state)->u.wide[17] = a23;
+	(state)->u.wide[18] = a33;
+	(state)->u.wide[19] = a43;
+	(state)->u.wide[20] = a04;
+	(state)->u.wide[21] = a14;
+	(state)->u.wide[22] = a24;
+	(state)->u.wide[23] = a34;
+	(state)->u.wide[24] = a44;*/
 	/* Finalize the "lane complement" */ 
-	kc->u.wide[ 1] = ~kc->u.wide[ 1]; 
-	kc->u.wide[ 2] = ~kc->u.wide[ 2]; 
-	kc->u.wide[ 8] = ~kc->u.wide[ 8]; 
-	kc->u.wide[12] = ~kc->u.wide[12]; 
-	kc->u.wide[17] = ~kc->u.wide[17]; 
-	kc->u.wide[20] = ~kc->u.wide[20]; 
-	for (j = 0; j < 64; j += 8) 
-		sph_enc64le_aligned(((unsigned char*)dst) + j, kc->u.wide[j >> 3]); 
+	//kc->u.wide[ 1] = ~kc->u.wide[ 1]; 
+	//kc->u.wide[ 2] = ~kc->u.wide[ 2]; 
+	//kc->u.wide[ 8] = ~kc->u.wide[ 8]; 
+	//kc->u.wide[12] = ~kc->u.wide[12]; 
+	//kc->u.wide[17] = ~kc->u.wide[17]; 
+	//kc->u.wide[20] = ~kc->u.wide[20]; 
+	//for (j = 0; j < 64; j += 8) 
+	//	sph_enc64le_aligned(((unsigned char*)dst) + j, kc->u.wide[j >> 3]); 
 }
 
 #if SPH_KECCAK_64
@@ -2057,6 +2163,459 @@ void
 sph_keccak512_addbits_and_close(void *cc, unsigned ub, unsigned n, void *dst)
 {
 	keccak_close64(cc, ub, n, dst);
+}
+//
+//void keccak256_maxcoin_opt(const unsigned long long *data, unsigned long long* dst)
+//{
+//	int j;
+//	DECL_STATE
+//
+//	a00 = data[0];
+//	a10 = ~data[1];
+//	a20 = ~data[2];
+//	a30 = data[3];
+//	a40 = data[4];
+//	a01 = data[5];
+//	a11 = data[6];
+//	a21 = data[7];
+//	a31 = ~data[8];
+//	a41 = data[9];
+//	a02 = 1;
+//
+//	a12 = 0;
+//	a22 = 0xFFFFFFFFFFFFFFFF;
+//	a32 = 0;
+//	a42 = 0;
+//	a03 = 0;
+//	a13 = 0x8000000000000000ULL;
+//	a23 = 0xFFFFFFFFFFFFFFFF;
+//	a33 = 0;
+//	a43 = 0; 
+//	a04 = 0xFFFFFFFFFFFFFFFF; 
+//	a14 = 0;
+//	a24 = 0;
+//	a34 = 0;
+//	a44 = 0;
+//
+//	// KECCAK_F_1600;
+//	for (j = 0; j < 24; j += 8) 
+//	{
+//		KF_ELT( 0,  1, RC[j + 0]);
+//		KF_ELT( 1,  2, RC[j + 1]);
+//		KF_ELT( 2,  3, RC[j + 2]);
+//		KF_ELT( 3,  4, RC[j + 3]);
+//		KF_ELT( 4,  5, RC[j + 4]);
+//		KF_ELT( 5,  6, RC[j + 5]);
+//		KF_ELT( 6,  7, RC[j + 6]);
+//		KF_ELT( 7,  8, RC[j + 7]);
+//		P8_TO_P0;
+//	}
+//
+//	*(dst+0) = a00;
+//	*(dst+1) = ~a10;
+//	*(dst+2) = ~a20;
+//	*(dst+3) = a30;
+//}
+
+#define TH_ELT_O(t, c0, c1, c2, c3, c4, d0, d1, d2, d3, d4) \
+	XOR64(tt0, d0, d1); \
+	XOR64(tt1, d2, d3); \
+	XOR64(tt0, tt0, d4); \
+	XOR64(tt0, tt0, tt1); \
+	ROL64(tt0, tt0, 1); \
+	XOR64(tt2, c0, c1); \
+	XOR64(tt3, c2, c3); \
+	XOR64(tt0, tt0, c4); \
+	XOR64(tt2, tt2, tt3); \
+	XOR64(t, tt0, tt2);
+
+//void keccak256_maxcoin_opt(const unsigned long long *data, unsigned long long* dst)
+//{
+//	int j;
+//	sph_u64 t;
+//	DECL64(c0);
+//	DECL64(c1);
+//	DECL64(c2);
+//	DECL64(c3);
+//	DECL64(c4);
+//	DECL64(tt0);
+//	DECL64(tt1);
+//	DECL64(tt2);
+//	DECL64(tt3);
+//	sph_u64 a00, a01, a02, a03, a04;
+//	sph_u64 a10, a11, a12, a13, a14;
+//	sph_u64 a20, a21, a22, a23, a24;
+//	sph_u64 a30, a31, a32, a33, a34;
+//	sph_u64 a40, a41, a42, a43, a44;
+//
+//	a00 = data[0];
+//	a10 = ~data[1];
+//	a20 = ~data[2];
+//	a30 = data[3];
+//	a40 = data[4];
+//	a01 = data[5];
+//	a11 = data[6];
+//	a21 = data[7];
+//	a31 = ~data[8];
+//	a41 = data[9];
+//	a02 = 1;
+//
+//	a12 = 0;
+//	a22 = 0xFFFFFFFFFFFFFFFF;
+//	a32 = 0;
+//	a42 = 0;
+//	a03 = 0;
+//	a13 = 0x8000000000000000ULL;
+//	a23 = 0xFFFFFFFFFFFFFFFF;
+//	a33 = 0;
+//	a43 = 0; 
+//	a04 = 0xFFFFFFFFFFFFFFFF; 
+//	a14 = 0;
+//	a24 = 0;
+//	a34 = 0;
+//	a44 = 0;
+//
+//	for (j = 0; j < 24; j += 1) 
+//	{
+//		TH_ELT_O(c0, a40, a41, a42, a43, a44, a10, a11, a12, a13, a14);
+//		TH_ELT_O(c1, a00, a01, a02, a03, a04, a20, a21, a22, a23, a24);
+//		TH_ELT_O(c2, a10, a11, a12, a13, a14, a30, a31, a32, a33, a34);
+//		TH_ELT_O(c3, a20, a21, a22, a23, a24, a40, a41, a42, a43, a44);
+//		TH_ELT_O(c4, a30, a31, a32, a33, a34, a00, a01, a02, a03, a04);
+//		a00 = a00 ^ c0;
+//		a01 = a01 ^ c0;
+//		a02 = a02 ^ c0;
+//		a03 = a03 ^ c0;
+//		a04 = a04 ^ c0;
+//		a10 = a10 ^ c1;
+//		a11 = a11 ^ c1;
+//		a12 = a12 ^ c1;
+//		a13 = a13 ^ c1;
+//		a14 = a14 ^ c1;
+//		a20 = a20 ^ c2;
+//		a21 = a21 ^ c2;
+//		a22 = a22 ^ c2;
+//		a23 = a23 ^ c2;
+//		a24 = a24 ^ c2;
+//		a30 = a30 ^ c3;
+//		a31 = a31 ^ c3;
+//		a32 = a32 ^ c3;
+//		a33 = a33 ^ c3;
+//		a34 = a34 ^ c3;
+//		a40 = a40 ^ c4;
+//		a41 = a41 ^ c4;
+//		a42 = a42 ^ c4;
+//		a43 = a43 ^ c4;
+//		a44 = a44 ^ c4;
+//		/* ROL64(b00, b00,  0); */
+//		ROL64(a01, a01, 36);
+//		ROL64(a02, a02,  3);
+//		ROL64(a03, a03, 41);
+//		ROL64(a04, a04, 18);
+//		ROL64(a10, a10,  1);
+//		ROL64(a11, a11, 44);
+//		ROL64(a12, a12, 10);
+//		ROL64(a13, a13, 45);
+//		ROL64(a14, a14,  2);
+//		ROL64(a20, a20, 62);
+//		ROL64(a21, a21,  6);
+//		ROL64(a22, a22, 43);
+//		ROL64(a23, a23, 15);
+//		ROL64(a24, a24, 61);
+//		ROL64(a30, a30, 28);
+//		ROL64(a31, a31, 55);
+//		ROL64(a32, a32, 25);
+//		ROL64(a33, a33, 21);
+//		ROL64(a34, a34, 56);
+//		ROL64(a40, a40, 27);
+//		ROL64(a41, a41, 20);
+//		ROL64(a42, a42, 39);
+//		ROL64(a43, a43,  8);
+//		ROL64(a44, a44, 14);
+//		t = ~a22;
+//		c0 = a00 ^ (a11|a22);
+//		c1 = a11 ^ (t|a33);
+//		c2 = a22 ^ (a33&a44);
+//		c3 = a33 ^ (a44|a00);
+//		c4 = a44 ^ (a00&a11);
+//		a00 = c0;
+//		a11 = c1;
+//		a22 = c2;
+//		a33 = c3;
+//		a44 = c4;
+//		t = ~a24;
+//		c0 = a30 ^ (a41|a02);
+//		c1 = a41 ^ (a02&a13);
+//		c2 = a02 ^ (a13|t);
+//		c3 = a13 ^ (a24|a30);
+//		c4 = a24 ^ (a30&a41);
+//		a30 = c0;
+//		a41 = c1;
+//		a02 = c2;
+//		a13 = c3;
+//		a24 = c4;
+//		t = ~a43;
+//		c0 = a10 ^ (a21|a32);
+//		c1 = a21 ^ (a32&a43);
+//		c2 = a32 ^ (t&a04);
+//		c3 = t ^ (a04|a10);
+//		c4 = a04 ^ (a10&a21);
+//		a10 = c0;
+//		a21 = c1;
+//		a32 = c2;
+//		a43 = c3;
+//		a04 = c4;
+//		t = ~a23;
+//		c0 = a40 ^ (a01&a12);
+//		c1 = a01 ^ (a12|a23);
+//		c2 = a12 ^ (t|a34);
+//		c3 = t ^ (a34&a40);
+//		c4 = a34 ^ (a40|a01);
+//		a40 = c0;
+//		a01 = c1;
+//		a12 = c2;
+//		a23 = c3;
+//		a34 = c4;
+//		t = ~a31;
+//		c0 = a20 ^ (t&a42);
+//		c1 = t ^ (a42|a03);
+//		c2 = a42 ^ (a03&a14);
+//		c3 = a03 ^ (a14|a20);
+//		c4 = a14 ^ (a20&a31);
+//		a20 = c0;
+//		a31 = c1;
+//		a42 = c2;
+//		a03 = c3;
+//		a14 = c4;
+//		a00 ^= RC[j];
+//		t = a01;
+//		a01 = a30;
+//		a30 = a33;
+//		a33 = a23;
+//		a23 = a12;
+//		a12 = a21;
+//		a21 = a02;
+//		a02 = a10;
+//		a10 = a11;
+//		a11 = a41;
+//		a41 = a24;
+//		a24 = a42;
+//		a42 = a04;
+//		a04 = a20;
+//		a20 = a22;
+//		a22 = a32;
+//		a32 = a43;
+//		a43 = a34;
+//		a34 = a03;
+//		a03 = a40;
+//		a40 = a44;
+//		a44 = a14;
+//		a14 = a31;
+//		a31 = a13;
+//		a13 = t;
+//	}
+//
+//
+//	*(dst+0) = a00;
+//	*(dst+1) = ~a10;
+//	*(dst+2) = ~a20;
+//	*(dst+3) = a30;
+//}
+
+unsigned long long keccak256_maxcoin_opt_v(const unsigned long long *data)
+{
+	int j;
+	sph_u64 t;
+	DECL64(c0);
+	DECL64(c1);
+	DECL64(c2);
+	DECL64(c3);
+	DECL64(c4);
+	DECL64(tt0);
+	DECL64(tt1);
+	DECL64(tt2);
+	DECL64(tt3);
+	sph_u64 a00, a01, a02, a03, a04;
+	sph_u64 a10, a11, a12, a13, a14;
+	sph_u64 a20, a21, a22, a23, a24;
+	sph_u64 a30, a31, a32, a33, a34;
+	sph_u64 a40, a41, a42, a43, a44;
+	a00 = data[0];
+	a10 = ~data[1];
+	a20 = ~data[2];
+	a30 = data[3];
+	a40 = data[4];
+	a01 = data[5];
+	a11 = data[6];
+	a21 = data[7];
+	a31 = ~data[8];
+	a41 = data[9];
+	a02 = 1;
+
+	a12 = 0;
+	a22 = 0xFFFFFFFFFFFFFFFF;
+	a32 = 0;
+	a42 = 0;
+	a03 = 0;
+	a13 = 0x8000000000000000ULL;
+	a23 = 0xFFFFFFFFFFFFFFFF;
+	a33 = 0;
+	a43 = 0; 
+	a04 = 0xFFFFFFFFFFFFFFFF; 
+	a14 = 0;
+	a24 = 0;
+	a34 = 0;
+	a44 = 0;
+
+	for (j = 0; j < 24-1; j++) 
+	{
+		TH_ELT_O(c0, a40, a41, a42, a43, a44, a10, a11, a12, a13, a14);
+		TH_ELT_O(c1, a00, a01, a02, a03, a04, a20, a21, a22, a23, a24);
+		TH_ELT_O(c2, a10, a11, a12, a13, a14, a30, a31, a32, a33, a34);
+		TH_ELT_O(c3, a20, a21, a22, a23, a24, a40, a41, a42, a43, a44);
+		TH_ELT_O(c4, a30, a31, a32, a33, a34, a00, a01, a02, a03, a04);
+		a00 = a00 ^ c0;
+		a01 = a01 ^ c0;
+		a02 = a02 ^ c0;
+		a03 = a03 ^ c0;
+		a04 = a04 ^ c0;
+		a10 = a10 ^ c1;
+		a11 = a11 ^ c1;
+		a12 = a12 ^ c1;
+		a13 = a13 ^ c1;
+		a14 = a14 ^ c1;
+		a20 = a20 ^ c2;
+		a21 = a21 ^ c2;
+		a22 = a22 ^ c2;
+		a23 = a23 ^ c2;
+		a24 = a24 ^ c2;
+		a30 = a30 ^ c3;
+		a31 = a31 ^ c3;
+		a32 = a32 ^ c3;
+		a33 = a33 ^ c3;
+		a34 = a34 ^ c3;
+		a40 = a40 ^ c4;
+		a41 = a41 ^ c4;
+		a42 = a42 ^ c4;
+		a43 = a43 ^ c4;
+		a44 = a44 ^ c4;
+		/* ROL64(b00, b00,  0); */
+		ROL64(a01, a01, 36);
+		ROL64(a02, a02,  3);
+		ROL64(a03, a03, 41);
+		ROL64(a04, a04, 18);
+		ROL64(a10, a10,  1);
+		ROL64(a11, a11, 44);
+		ROL64(a12, a12, 10);
+		ROL64(a13, a13, 45);
+		ROL64(a14, a14,  2);
+		ROL64(a20, a20, 62);
+		ROL64(a21, a21,  6);
+		ROL64(a22, a22, 43);
+		ROL64(a23, a23, 15);
+		ROL64(a24, a24, 61);
+		ROL64(a30, a30, 28);
+		ROL64(a31, a31, 55);
+		ROL64(a32, a32, 25);
+		ROL64(a33, a33, 21);
+		ROL64(a34, a34, 56);
+		ROL64(a40, a40, 27);
+		ROL64(a41, a41, 20);
+		ROL64(a42, a42, 39);
+		ROL64(a43, a43,  8);
+		ROL64(a44, a44, 14);
+		t = ~a22;
+		c0 = a00 ^ (a11|a22);
+		c1 = a11 ^ (t|a33);
+		c2 = a22 ^ (a33&a44);
+		c3 = a33 ^ (a44|a00);
+		c4 = a44 ^ (a00&a11);
+		a00 = c0;
+		a11 = c1;
+		a22 = c2;
+		a33 = c3;
+		a44 = c4;
+		t = ~a24;
+		c0 = a30 ^ (a41|a02);
+		c1 = a41 ^ (a02&a13);
+		c2 = a02 ^ (a13|t);
+		c3 = a13 ^ (a24|a30);
+		c4 = a24 ^ (a30&a41);
+		a30 = c0;
+		a41 = c1;
+		a02 = c2;
+		a13 = c3;
+		a24 = c4;
+		t = ~a43;
+		c0 = a10 ^ (a21|a32);
+		c1 = a21 ^ (a32&a43);
+		c2 = a32 ^ (t&a04);
+		c3 = t ^ (a04|a10);
+		c4 = a04 ^ (a10&a21);
+		a10 = c0;
+		a21 = c1;
+		a32 = c2;
+		a43 = c3;
+		a04 = c4;
+		t = ~a23;
+		c0 = a40 ^ (a01&a12);
+		c1 = a01 ^ (a12|a23);
+		c2 = a12 ^ (t|a34);
+		c3 = t ^ (a34&a40);
+		c4 = a34 ^ (a40|a01);
+		a40 = c0;
+		a01 = c1;
+		a12 = c2;
+		a23 = c3;
+		a34 = c4;
+		t = ~a31;
+		c0 = a20 ^ (t&a42);
+		c1 = t ^ (a42|a03);
+		c2 = a42 ^ (a03&a14);
+		c3 = a03 ^ (a14|a20);
+		c4 = a14 ^ (a20&a31);
+		a20 = c0;
+		a31 = c1;
+		a42 = c2;
+		a03 = c3;
+		a14 = c4;
+		a00 ^= RC[j];
+		t = a01;
+		a01 = a30;
+		a30 = a33;
+		a33 = a23;
+		a23 = a12;
+		a12 = a21;
+		a21 = a02;
+		a02 = a10;
+		a10 = a11;
+		a11 = a41;
+		a41 = a24;
+		a24 = a42;
+		a42 = a04;
+		a04 = a20;
+		a20 = a22;
+		a22 = a32;
+		a32 = a43;
+		a43 = a34;
+		a34 = a03;
+		a03 = a40;
+		a40 = a44;
+		a44 = a14;
+		a14 = a31;
+		a31 = a13;
+		a13 = t;
+	}
+	// last round isolated
+	TH_ELT_O(c0, a40, a41, a42, a43, a44, a10, a11, a12, a13, a14);
+	TH_ELT_O(c3, a20, a21, a22, a23, a24, a40, a41, a42, a43, a44);
+	TH_ELT_O(c4, a30, a31, a32, a33, a34, a00, a01, a02, a03, a04);
+	a00 = a00 ^ c0;
+	a33 = a33 ^ c3;
+	a44 = a44 ^ c4;
+	ROL64(a33, a33, 21);
+	ROL64(a44, a44, 14);
+	return a33 ^ (a44|a00);
 }
 
 #ifdef __cplusplus

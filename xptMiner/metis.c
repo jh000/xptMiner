@@ -442,14 +442,14 @@ static const sph_u32 mixtab3[] = {
 		x04 ^= x30; \
 	} while (0)
 
-#define TIX4(q, x00, x01, x04, x07, x08, x22, x24, x27, x30)   do { \
+#define TIX4(q, x00, x01, x04, x07, x08, x22, x24, x27, x30) \
 		x22 ^= x00; \
 		x00 = (q); \
 		x08 ^= x00; \
 		x01 ^= x24; \
 		x04 ^= x27; \
-		x07 ^= x30; \
-	} while (0)
+		x07 ^= x30;
+	
 
 #define CMIX30(x00, x01, x02, x04, x05, x06, x15, x16, x17)   do { \
 		x00 ^= x04; \
@@ -460,14 +460,13 @@ static const sph_u32 mixtab3[] = {
 		x17 ^= x06; \
 	} while (0)
 
-#define CMIX36(x00, x01, x02, x04, x05, x06, x18, x19, x20)   do { \
+#define CMIX36(x00, x01, x02, x04, x05, x06, x18, x19, x20) \
 		x00 ^= x04; \
 		x01 ^= x05; \
 		x02 ^= x06; \
 		x18 ^= x04; \
 		x19 ^= x05; \
-		x20 ^= x06; \
-	} while (0)
+		x20 ^= x06;
 
 #define SMIX(x0, x1, x2, x3)   do { \
 		sph_u32 c0 = 0; \
@@ -480,18 +479,18 @@ static const sph_u32 mixtab3[] = {
 		sph_u32 r3 = 0; \
 		sph_u32 tmp; \
 		tmp = mixtab0[x0 >> 24]; \
-		c0 ^= tmp; \
+		c0 = tmp; \
 		tmp = mixtab1[(x0 >> 16) & 0xFF]; \
 		c0 ^= tmp; \
-		r1 ^= tmp; \
+		r1 = tmp; \
 		tmp = mixtab2[(x0 >>  8) & 0xFF]; \
 		c0 ^= tmp; \
-		r2 ^= tmp; \
+		r2 = tmp; \
 		tmp = mixtab3[x0 & 0xFF]; \
 		c0 ^= tmp; \
-		r3 ^= tmp; \
+		r3 = tmp; \
 		tmp = mixtab0[x1 >> 24]; \
-		c1 ^= tmp; \
+		c1 = tmp; \
 		r0 ^= tmp; \
 		tmp = mixtab1[(x1 >> 16) & 0xFF]; \
 		c1 ^= tmp; \
@@ -502,7 +501,7 @@ static const sph_u32 mixtab3[] = {
 		c1 ^= tmp; \
 		r3 ^= tmp; \
 		tmp = mixtab0[x2 >> 24]; \
-		c2 ^= tmp; \
+		c2 = tmp; \
 		r0 ^= tmp; \
 		tmp = mixtab1[(x2 >> 16) & 0xFF]; \
 		c2 ^= tmp; \
@@ -513,7 +512,7 @@ static const sph_u32 mixtab3[] = {
 		c2 ^= tmp; \
 		r3 ^= tmp; \
 		tmp = mixtab0[x3 >> 24]; \
-		c3 ^= tmp; \
+		c3 = tmp; \
 		r0 ^= tmp; \
 		tmp = mixtab1[(x3 >> 16) & 0xFF]; \
 		c3 ^= tmp; \
@@ -523,22 +522,22 @@ static const sph_u32 mixtab3[] = {
 		r2 ^= tmp; \
 		tmp = mixtab3[x3 & 0xFF]; \
 		c3 ^= tmp; \
-		x0 = ((c0 ^ r0) & SPH_C32(0xFF000000)) \
-			| ((c1 ^ r1) & SPH_C32(0x00FF0000)) \
-			| ((c2 ^ r2) & SPH_C32(0x0000FF00)) \
-			| ((c3 ^ r3) & SPH_C32(0x000000FF)); \
-		x1 = ((c1 ^ (r0 << 8)) & SPH_C32(0xFF000000)) \
-			| ((c2 ^ (r1 << 8)) & SPH_C32(0x00FF0000)) \
-			| ((c3 ^ (r2 << 8)) & SPH_C32(0x0000FF00)) \
-			| ((c0 ^ (r3 >> 24)) & SPH_C32(0x000000FF)); \
-		x2 = ((c2 ^ (r0 << 16)) & SPH_C32(0xFF000000)) \
-			| ((c3 ^ (r1 << 16)) & SPH_C32(0x00FF0000)) \
-			| ((c0 ^ (r2 >> 16)) & SPH_C32(0x0000FF00)) \
-			| ((c1 ^ (r3 >> 16)) & SPH_C32(0x000000FF)); \
-		x3 = ((c3 ^ (r0 << 24)) & SPH_C32(0xFF000000)) \
-			| ((c0 ^ (r1 >> 8)) & SPH_C32(0x00FF0000)) \
-			| ((c1 ^ (r2 >> 8)) & SPH_C32(0x0000FF00)) \
-			| ((c2 ^ (r3 >> 8)) & SPH_C32(0x000000FF)); \
+		x0 = ((c0 ^ r0) & 0xFF000000) \
+			| ((c1 ^ r1) & 0x00FF0000) \
+			| ((c2 ^ r2) & 0x0000FF00) \
+			| ((c3 ^ r3) & 0x000000FF); \
+		x1 = ((c1 ^ (r0 << 8)) & 0xFF000000) \
+			| ((c2 ^ (r1 << 8)) & 0x00FF0000) \
+			| ((c3 ^ (r2 << 8)) & 0x0000FF00) \
+			| ((c0 ^ (r3 >> 24)) & 0x000000FF); \
+		x2 = ((c2 ^ (r0 << 16)) & 0xFF000000) \
+			| ((c3 ^ (r1 << 16)) & 0x00FF0000) \
+			| ((c0 ^ (r2 >> 16)) & 0x0000FF00) \
+			| ((c1 ^ (r3 >> 16)) & 0x000000FF); \
+		x3 = ((c3 ^ (r0 << 24)) & 0xFF000000) \
+			| ((c0 ^ (r1 >> 8)) & 0x00FF0000) \
+			| ((c1 ^ (r2 >> 8)) & 0x0000FF00) \
+			| ((c2 ^ (r3 >> 8)) & 0x000000FF); \
 		/* */ \
 	} while (0)
 
@@ -892,8 +891,7 @@ metis3_core(sph_metis_context *sc, const void *data, size_t len)
 	WRITE_STATE_BIG(sc);
 }
 
-static void
-metis4_core(sph_metis_context *sc, const void *data, size_t len)
+static void metis4_core(sph_metis_context *sc, const void *data, size_t len)
 {
 	DECL_STATE_BIG
 	CORE_ENTRY
@@ -1235,6 +1233,1988 @@ sph_metis512_addbits_and_close(void *cc, unsigned ub, unsigned n, void *dst)
 {
 	metis4_close(cc, ub, n, dst);
 }
+
+
+#define SMIX_2(x0, x1, x2, x3) \
+	tmpSMIX = mixtab0[x0 >> 24]; \
+	c0 = tmpSMIX; \
+	tmpSMIX = mixtab1[(x0 >> 16) & 0xFF]; \
+	c0 ^= tmpSMIX; \
+	r1 = tmpSMIX; \
+	tmpSMIX = mixtab2[(x0 >>  8) & 0xFF]; \
+	c0 ^= tmpSMIX; \
+	r2 = tmpSMIX; \
+	tmpSMIX = mixtab3[x0 & 0xFF]; \
+	c0 ^= tmpSMIX; \
+	r3 = tmpSMIX; \
+	tmpSMIX = mixtab0[x1 >> 24]; \
+	c1 = tmpSMIX; \
+	r0 = tmpSMIX; \
+	tmpSMIX = mixtab1[(x1 >> 16) & 0xFF]; \
+	c1 ^= tmpSMIX; \
+	tmpSMIX = mixtab2[(x1 >>  8) & 0xFF]; \
+	c1 ^= tmpSMIX; \
+	r2 ^= tmpSMIX; \
+	tmpSMIX = mixtab3[x1 & 0xFF]; \
+	c1 ^= tmpSMIX; \
+	r3 ^= tmpSMIX; \
+	tmpSMIX = mixtab0[x2 >> 24]; \
+	c2 = tmpSMIX; \
+	r0 ^= tmpSMIX; \
+	tmpSMIX = mixtab1[(x2 >> 16) & 0xFF]; \
+	c2 ^= tmpSMIX; \
+	r1 ^= tmpSMIX; \
+	tmpSMIX = mixtab2[(x2 >>  8) & 0xFF]; \
+	c2 ^= tmpSMIX; \
+	tmpSMIX = mixtab3[x2 & 0xFF]; \
+	c2 ^= tmpSMIX; \
+	r3 ^= tmpSMIX; \
+	tmpSMIX = mixtab0[x3 >> 24]; \
+	c3 = tmpSMIX; \
+	r0 ^= tmpSMIX; \
+	tmpSMIX = mixtab1[(x3 >> 16) & 0xFF]; \
+	c3 ^= tmpSMIX; \
+	r1 ^= tmpSMIX; \
+	tmpSMIX = mixtab2[(x3 >>  8) & 0xFF]; \
+	c3 ^= tmpSMIX; \
+	r2 ^= tmpSMIX; \
+	tmpSMIX = mixtab3[x3 & 0xFF]; \
+	c3 ^= tmpSMIX; \
+	x0 = ((c0 ^ r0) & 0xFF000000) \
+	| ((c1 ^ r1) & 0x00FF0000) \
+	| ((c2 ^ r2) & 0x0000FF00) \
+	| ((c3 ^ r3) & 0x000000FF); \
+	x1 = ((c1 ^ (r0 << 8)) & 0xFF000000) \
+	| ((c2 ^ (r1 << 8)) & 0x00FF0000) \
+	| ((c3 ^ (r2 << 8)) & 0x0000FF00) \
+	| ((c0 ^ (r3 >> 24)) & 0x000000FF); \
+	x2 = ((c2 ^ (r0 << 16)) & 0xFF000000) \
+	| ((c3 ^ (r1 << 16)) & 0x00FF0000) \
+	| ((c0 ^ (r2 >> 16)) & 0x0000FF00) \
+	| ((c1 ^ (r3 >> 16)) & 0x000000FF); \
+	x3 = ((c3 ^ (r0 << 24)) & 0xFF000000) \
+	| ((c0 ^ (r1 >> 8)) & 0x00FF0000) \
+	| ((c1 ^ (r2 >> 8)) & 0x0000FF00) \
+	| ((c2 ^ (r3 >> 8)) & 0x000000FF);
+
+
+void SMIX_func(unsigned int* x0, unsigned int* x1, unsigned int* x2, unsigned int* x3)
+{
+	sph_u32 c0 = 0;
+	sph_u32 c1 = 0;
+	sph_u32 c2 = 0;
+	sph_u32 c3 = 0;
+	sph_u32 r0 = 0;
+	sph_u32 r1 = 0;
+	sph_u32 r2 = 0;
+	sph_u32 r3 = 0;
+	sph_u32 tmpSMIX;
+	tmpSMIX = mixtab0[(*x0) >> 24];
+	c0 = tmpSMIX;
+	tmpSMIX = mixtab1[((*x0) >> 16) & 0xFF];
+	c0 ^= tmpSMIX;
+	r1 = tmpSMIX;
+	tmpSMIX = mixtab2[((*x0) >>  8) & 0xFF];
+	c0 ^= tmpSMIX;
+	r2 = tmpSMIX;
+	tmpSMIX = mixtab3[(*x0) & 0xFF];
+	c0 ^= tmpSMIX;
+	r3 = tmpSMIX;
+	tmpSMIX = mixtab0[(*x1) >> 24];
+	c1 = tmpSMIX;
+	r0 = tmpSMIX;
+	tmpSMIX = mixtab1[((*x1) >> 16) & 0xFF];
+	c1 ^= tmpSMIX;
+	tmpSMIX = mixtab2[((*x1) >>  8) & 0xFF];
+	c1 ^= tmpSMIX;
+	r2 ^= tmpSMIX;
+	tmpSMIX = mixtab3[(*x1) & 0xFF];
+	c1 ^= tmpSMIX;
+	r3 ^= tmpSMIX;
+	tmpSMIX = mixtab0[(*x2) >> 24];
+	c2 = tmpSMIX;
+	r0 ^= tmpSMIX;
+	tmpSMIX = mixtab1[((*x2) >> 16) & 0xFF];
+	c2 ^= tmpSMIX;
+	r1 ^= tmpSMIX;
+	tmpSMIX = mixtab2[((*x2) >>  8) & 0xFF];
+	c2 ^= tmpSMIX;
+	tmpSMIX = mixtab3[(*x2) & 0xFF];
+	c2 ^= tmpSMIX;
+	r3 ^= tmpSMIX;
+	tmpSMIX = mixtab0[(*x3) >> 24];
+	c3 = tmpSMIX;
+	r0 ^= tmpSMIX;
+	tmpSMIX = mixtab1[((*x3) >> 16) & 0xFF];
+	c3 ^= tmpSMIX;
+	r1 ^= tmpSMIX;
+	tmpSMIX = mixtab2[((*x3) >>  8) & 0xFF];
+	c3 ^= tmpSMIX;
+	r2 ^= tmpSMIX;
+	tmpSMIX = mixtab3[(*x3) & 0xFF];
+	c3 ^= tmpSMIX;
+	(*x0) = ((c0 ^ r0) & 0xFF000000)
+	| ((c1 ^ r1) & 0x00FF0000)
+	| ((c2 ^ r2) & 0x0000FF00)
+	| ((c3 ^ r3) & 0x000000FF);
+	(*x1) = ((c1 ^ (r0 << 8)) & 0xFF000000)
+	| ((c2 ^ (r1 << 8)) & 0x00FF0000)
+	| ((c3 ^ (r2 << 8)) & 0x0000FF00)
+	| ((c0 ^ (r3 >> 24)) & 0x000000FF);
+	(*x2) = ((c2 ^ (r0 << 16)) & 0xFF000000)
+	| ((c3 ^ (r1 << 16)) & 0x00FF0000)
+	| ((c0 ^ (r2 >> 16)) & 0x0000FF00)
+	| ((c1 ^ (r3 >> 16)) & 0x000000FF);
+	(*x3) = ((c3 ^ (r0 << 24)) & 0xFF000000)
+	| ((c0 ^ (r1 >> 8)) & 0x00FF0000)
+	| ((c1 ^ (r2 >> 8)) & 0x0000FF00)
+	| ((c2 ^ (r3 >> 8)) & 0x000000FF);
+}
+
+//#undef SMIX_2
+//#define SMIX_2(x0, x1, x2, x3) SMIX_func(&(x0), &(x1), &(x2), &(x3));
+
+#define metis4_u32ToBE(_p) ((_p>>24)|((_p>>8)&0xFF00)|((_p<<8)&0xFF0000)|(_p<<24))
+
+unsigned int metis4_core_opt(unsigned int* data)
+{
+	sph_u32 tmp[9];
+	int i;
+	// variables for SMIX
+	sph_u32 c0 = 0;
+	sph_u32 c1 = 0;
+	sph_u32 c2 = 0;
+	sph_u32 c3 = 0;
+	sph_u32 r0 = 0;
+	sph_u32 r1 = 0;
+	sph_u32 r2 = 0;
+	sph_u32 r3 = 0;
+	sph_u32 tmpSMIX;
+	//DECL_STATE_BIG
+	sph_u32 S00, S01, S02, S03, S04, S05, S06, S07, S08, S09;
+	sph_u32 S10, S11, S12, S13, S14, S15, S16, S17, S18, S19;
+	sph_u32 S20, S21, S22, S23, S24, S25, S26, S27, S28, S29;
+	sph_u32 S30, S31, S32, S33, S34, S35;
+	// CORE_ENTRY
+	sph_u32 p;
+	p = metis4_u32ToBE(*data);
+	data++;
+	// READ_STATE_BIG(sc);
+	S00 = 0;
+	S01 = 0;
+	S02 = 0;
+	S03 = 0;
+	S04 = 0;
+	S05 = 0;
+	S06 = 0;
+	S07 = 0;
+	S08 = 0;
+	S09 = 0;
+	S10 = 0;
+	S11 = 0;
+	S12 = 0;
+	S13 = 0;
+	S14 = 0;
+	S15 = 0;
+	S16 = 0;
+	S17 = 0;
+	S18 = 0;
+	S19 = 0;
+	S20 = 0x8807a57e;
+	S21 = 0xe616af75;
+	S22 = 0xc5d3e4db;
+	S23 = 0xac9ab027;
+	S24 = 0xd915f117;
+	S25 = 0xb6eecc54;
+	S26 = 0x06e8020b;
+	S27 = 0x4a92efd1;
+	S28 = 0xaac6e2c9;
+	S29 = 0xddb21398;
+	S30 = 0xcae65838;
+	S31 = 0x437f203f;
+	S32 = 0x25ea78e7;
+	S33 = 0x951fddd6;
+	S34 = 0xda6ed11d;
+	S35 = 0xe13e3567;
+
+	//// isolated first round
+	//// TIX4(q, x00, x01, x04, x07, x08, x22, x24, x27, x30) \
+	//// TIX4(p, S00, S01, S04, S07, S08, S22, S24, S27, S30);
+	//S00 = p;
+	//S08 ^= S00;
+	//S22 = 0xc5d3e4db;
+	//S01 = 0xd915f117;
+	//S04 = 0x4a92efd1;
+	//S07 = 0xcae65838;
+	//// dynamic: S00, S08
+	//// CMIX36(S33, S34, S35, S01, S02, S03, S15, S16, S17);
+	//S33 = 0x4c0a2cc1;//S01;
+	//S34 = 0xda6ed11d;//S02;
+	//S35 = 0xe13e3567;//S35;//S03;
+	//S15 = 0xd915f117;//S01;
+	//S16 = 0x00000000;//S02;
+	//S17 = 0x00000000;//S03;
+	//// SMIX_2(S33, S34, S35, S00);
+	//c0 = 0x9ae23283;
+	//c1 = 0x0361b92d;
+	//c2 = 0x4c92d8ed;
+	//r0 = 0xafaf608a;
+	//r1 = 0x79d5d51d;
+	//r2 = 0xf6274f4f;
+	//r3 = 0x59947f59;
+	//c3 = mixtab0[S00 >> 24];
+	//r0 ^= c3;
+	//tmpSMIX = mixtab1[(S00 >> 16) & 0xFF];
+	//c3 ^= tmpSMIX;
+	//r1 ^= tmpSMIX;
+	//tmpSMIX = mixtab2[(S00 >>  8) & 0xFF];
+	//c3 ^= tmpSMIX;
+	//r2 ^= tmpSMIX;
+	//tmpSMIX = mixtab3[S00 & 0xFF];
+	//c3 ^= tmpSMIX;
+	//S33 = ((c0 ^ r0) & 0xFF000000)
+	//| ((c1 ^ r1) & 0x00FF0000)
+	//| ((c2 ^ r2) & 0x0000FF00)
+	//| ((c3 ^ r3) & 0x000000FF);
+	//S34 = ((c1 ^ (r0 << 8)) & 0xFF000000)
+	//| ((c2 ^ (r1 << 8)) & 0x00FF0000)
+	//| ((c3 ^ (r2 << 8)) & 0x0000FF00)
+	//| ((c0 ^ (r3 >> 24)) & 0x000000FF);
+	//S35 = ((c2 ^ (r0 << 16)) & 0xFF000000)
+	//| ((c3 ^ (r1 << 16)) & 0x00FF0000)
+	//| ((c0 ^ (r2 >> 16)) & 0x0000FF00)
+	//| ((c1 ^ (r3 >> 16)) & 0x000000FF);
+	//S00 = ((c3 ^ (r0 << 24)) & 0xFF000000)
+	//| ((c0 ^ (r1 >> 8)) & 0x00FF0000)
+	//| ((c1 ^ (r2 >> 8)) & 0x0000FF00)
+	//| ((c2 ^ (r3 >> 8)) & 0x000000FF);
+	//// dynamic: S00, S08, S33, S34, S35
+	//CMIX36(S30, S31, S32, S34, S35, S00, S12, S13, S14);
+	//SMIX_2(S30, S31, S32, S33);
+	//CMIX36(S27, S28, S29, S31, S32, S33, S09, S10, S11);
+	//SMIX_2(S27, S28, S29, S30);
+	//CMIX36(S24, S25, S26, S28, S29, S30, S06, S07, S08);
+	//SMIX_2(S24, S25, S26, S27);
+	////NEXT(1);
+	//p = metis4_u32ToBE(*data);
+	//data++;
+	//TIX4(p, S24, S25, S28, S31, S32, S10, S12, S15, S18);
+	//CMIX36(S21, S22, S23, S25, S26, S27, S03, S04, S05);
+	//SMIX_2(S21, S22, S23, S24);
+	//CMIX36(S18, S19, S20, S22, S23, S24, S00, S01, S02);
+	//SMIX_2(S18, S19, S20, S21);
+	//CMIX36(S15, S16, S17, S19, S20, S21, S33, S34, S35);
+	//SMIX_2(S15, S16, S17, S18);
+	//CMIX36(S12, S13, S14, S16, S17, S18, S30, S31, S32);
+	//SMIX_2(S12, S13, S14, S15);
+	//p = metis4_u32ToBE(*data);
+	//data++;
+	//TIX4(p, S12, S13, S16, S19, S20, S34, S00, S03, S06);
+	//CMIX36(S09, S10, S11, S13, S14, S15, S27, S28, S29);
+	//SMIX_2(S09, S10, S11, S12);
+	//CMIX36(S06, S07, S08, S10, S11, S12, S24, S25, S26);
+	//SMIX_2(S06, S07, S08, S09);
+	//CMIX36(S03, S04, S05, S07, S08, S09, S21, S22, S23);
+	//SMIX_2(S03, S04, S05, S06);
+	//CMIX36(S00, S01, S02, S04, S05, S06, S18, S19, S20);
+	//SMIX_2(S00, S01, S02, S03);
+	//p = metis4_u32ToBE(*data);
+	//data++;
+	// end of isolated first round
+	for(i=0; i<60/12; i++)
+	{
+		//q = p;
+		TIX4(p, S00, S01, S04, S07, S08, S22, S24, S27, S30);
+		CMIX36(S33, S34, S35, S01, S02, S03, S15, S16, S17);
+		SMIX_2(S33, S34, S35, S00);
+		CMIX36(S30, S31, S32, S34, S35, S00, S12, S13, S14);
+		SMIX_2(S30, S31, S32, S33);
+		CMIX36(S27, S28, S29, S31, S32, S33, S09, S10, S11);
+		SMIX_2(S27, S28, S29, S30);
+		CMIX36(S24, S25, S26, S28, S29, S30, S06, S07, S08);
+		SMIX_2(S24, S25, S26, S27);
+		//NEXT(1);
+		p = metis4_u32ToBE(*data);
+		data++;
+		TIX4(p, S24, S25, S28, S31, S32, S10, S12, S15, S18);
+		CMIX36(S21, S22, S23, S25, S26, S27, S03, S04, S05);
+		SMIX_2(S21, S22, S23, S24);
+		CMIX36(S18, S19, S20, S22, S23, S24, S00, S01, S02);
+		SMIX_2(S18, S19, S20, S21);
+		CMIX36(S15, S16, S17, S19, S20, S21, S33, S34, S35);
+		SMIX_2(S15, S16, S17, S18);
+		CMIX36(S12, S13, S14, S16, S17, S18, S30, S31, S32);
+		SMIX_2(S12, S13, S14, S15);
+		p = metis4_u32ToBE(*data);
+		data++;
+		TIX4(p, S12, S13, S16, S19, S20, S34, S00, S03, S06);
+		CMIX36(S09, S10, S11, S13, S14, S15, S27, S28, S29);
+		SMIX_2(S09, S10, S11, S12);
+		CMIX36(S06, S07, S08, S10, S11, S12, S24, S25, S26);
+		SMIX_2(S06, S07, S08, S09);
+		CMIX36(S03, S04, S05, S07, S08, S09, S21, S22, S23);
+		SMIX_2(S03, S04, S05, S06);
+		CMIX36(S00, S01, S02, S04, S05, S06, S18, S19, S20);
+		SMIX_2(S00, S01, S02, S03);
+		p = metis4_u32ToBE(*data);
+		data++;
+	}
+	// final (close round)
+	TIX4(p, S00, S01, S04, S07, S08, S22, S24, S27, S30);
+	CMIX36(S33, S34, S35, S01, S02, S03, S15, S16, S17);
+	SMIX_2(S33, S34, S35, S00);
+	CMIX36(S30, S31, S32, S34, S35, S00, S12, S13, S14);
+	SMIX_2(S30, S31, S32, S33);
+	CMIX36(S27, S28, S29, S31, S32, S33, S09, S10, S11);
+	SMIX_2(S27, S28, S29, S30);
+	CMIX36(S24, S25, S26, S28, S29, S30, S06, S07, S08);
+	SMIX_2(S24, S25, S26, S27);
+	//NEXT(1);
+	TIX4(0, S24, S25, S28, S31, S32, S10, S12, S15, S18);
+	CMIX36(S21, S22, S23, S25, S26, S27, S03, S04, S05);
+	SMIX_2(S21, S22, S23, S24);
+	CMIX36(S18, S19, S20, S22, S23, S24, S00, S01, S02);
+	SMIX_2(S18, S19, S20, S21);
+	CMIX36(S15, S16, S17, S19, S20, S21, S33, S34, S35);
+	SMIX_2(S15, S16, S17, S18);
+	CMIX36(S12, S13, S14, S16, S17, S18, S30, S31, S32);
+	SMIX_2(S12, S13, S14, S15);
+	TIX4(0x200, S12, S13, S16, S19, S20, S34, S00, S03, S06);
+	CMIX36(S09, S10, S11, S13, S14, S15, S27, S28, S29);
+	SMIX_2(S09, S10, S11, S12);
+	CMIX36(S06, S07, S08, S10, S11, S12, S24, S25, S26);
+	SMIX_2(S06, S07, S08, S09);
+	CMIX36(S03, S04, S05, S07, S08, S09, S21, S22, S23);
+	SMIX_2(S03, S04, S05, S06);
+	CMIX36(S00, S01, S02, S04, S05, S06, S18, S19, S20);
+	SMIX_2(S00, S01, S02, S03);
+	// close logic
+	for (i = 0; i < 32; i ++)
+	{
+		//ROR(3, 36); (n, s) <-- ?
+		sph_u32 tmp[3];
+		tmp[0] = S35;
+		tmp[1] = S34;
+		tmp[2] = S33;
+		S35 = S32;
+		S34 = S31;
+		S33 = S30;
+		S32 = S29;
+		S31 = S28;
+		S30 = S27;
+		S29 = S26;
+		S28 = S25;
+		S27 = S24;
+		S26 = S23;
+		S25 = S22;
+		S24 = S21;
+		S23 = S20;
+		S22 = S19;
+		S21 = S18;
+		S20 = S17;
+		S19 = S16;
+		S18 = S15;
+		S17 = S14;
+		S16 = S13;
+		S15 = S12;
+		S14 = S11;
+		S13 = S10;
+		S12 = S09;
+		S11 = S08;
+		S10 = S07;
+		S09 = S06;
+		S08 = S05;
+		S07 = S04;
+		S06 = S03;
+		S05 = S02;
+		S04 = S01;
+		S03 = S00;
+		S02 = tmp[0];
+		S01 = tmp[1];
+		S00 = tmp[2];
+		CMIX36(S00, S01, S02, S04, S05, S06, S18, S19, S20);
+		SMIX_2(S00, S01, S02, S03);
+	}
+	for (i = 0; i < 12; i ++) 
+	{
+		S04 ^= S00;
+		S09 ^= S00;
+		S18 ^= S00;
+		S27 ^= S00;
+		//ROR(9, 36);
+		tmp[0] = S35;
+		tmp[1] = S34;
+		tmp[2] = S33;
+		tmp[3] = S32;
+		tmp[4] = S31;
+		tmp[5] = S30;
+		tmp[6] = S29;
+		tmp[7] = S28;
+		tmp[8] = S27;
+		S35 = S26;
+		S34 = S25;
+		S33 = S24;
+		S32 = S23;
+		S31 = S22;
+		S30 = S21;
+		S29 = S20;
+		S28 = S19;
+		S27 = S18;
+		S26 = S17;
+		S25 = S16;
+		S24 = S15;
+		S23 = S14;
+		S22 = S13;
+		S21 = S12;
+		S20 = S11;
+		S19 = S10;
+		S18 = S09;
+		S17 = S08;
+		S16 = S07;
+		S15 = S06;
+		S14 = S05;
+		S13 = S04;
+		S12 = S03;
+		S11 = S02;
+		S10 = S01;
+		S09 = S00;
+		S08 = tmp[0];
+		S07 = tmp[1];
+		S06 = tmp[2];
+		S05 = tmp[3];
+		S04 = tmp[4];
+		S03 = tmp[5];
+		S02 = tmp[6];
+		S01 = tmp[7];
+		S00 = tmp[8];
+		SMIX_2(S00, S01, S02, S03);
+		S04 ^= S00;
+		S10 ^= S00;
+		S18 ^= S00;
+		S27 ^= S00;
+		//ROR(9, 36);
+		tmp[0] = S35;
+		tmp[1] = S34;
+		tmp[2] = S33;
+		tmp[3] = S32;
+		tmp[4] = S31;
+		tmp[5] = S30;
+		tmp[6] = S29;
+		tmp[7] = S28;
+		tmp[8] = S27;
+		S35 = S26;
+		S34 = S25;
+		S33 = S24;
+		S32 = S23;
+		S31 = S22;
+		S30 = S21;
+		S29 = S20;
+		S28 = S19;
+		S27 = S18;
+		S26 = S17;
+		S25 = S16;
+		S24 = S15;
+		S23 = S14;
+		S22 = S13;
+		S21 = S12;
+		S20 = S11;
+		S19 = S10;
+		S18 = S09;
+		S17 = S08;
+		S16 = S07;
+		S15 = S06;
+		S14 = S05;
+		S13 = S04;
+		S12 = S03;
+		S11 = S02;
+		S10 = S01;
+		S09 = S00;
+		S08 = tmp[0];
+		S07 = tmp[1];
+		S06 = tmp[2];
+		S05 = tmp[3];
+		S04 = tmp[4];
+		S03 = tmp[5];
+		S02 = tmp[6];
+		S01 = tmp[7];
+		S00 = tmp[8];
+		SMIX_2(S00, S01, S02, S03);
+		S04 ^= S00;
+		S10 ^= S00;
+		S19 ^= S00;
+		S27 ^= S00;
+		// ROR(9, 36);
+		tmp[0] = S35;
+		tmp[1] = S34;
+		tmp[2] = S33;
+		tmp[3] = S32;
+		tmp[4] = S31;
+		tmp[5] = S30;
+		tmp[6] = S29;
+		tmp[7] = S28;
+		tmp[8] = S27;
+		S35 = S26;
+		S34 = S25;
+		S33 = S24;
+		S32 = S23;
+		S31 = S22;
+		S30 = S21;
+		S29 = S20;
+		S28 = S19;
+		S27 = S18;
+		S26 = S17;
+		S25 = S16;
+		S24 = S15;
+		S23 = S14;
+		S22 = S13;
+		S21 = S12;
+		S20 = S11;
+		S19 = S10;
+		S18 = S09;
+		S17 = S08;
+		S16 = S07;
+		S15 = S06;
+		S14 = S05;
+		S13 = S04;
+		S12 = S03;
+		S11 = S02;
+		S10 = S01;
+		S09 = S00;
+		S08 = tmp[0];
+		S07 = tmp[1];
+		S06 = tmp[2];
+		S05 = tmp[3];
+		S04 = tmp[4];
+		S03 = tmp[5];
+		S02 = tmp[6];
+		S01 = tmp[7];
+		S00 = tmp[8];
+		SMIX_2(S00, S01, S02, S03);
+		S04 ^= S00;
+		S10 ^= S00;
+		S19 ^= S00;
+		S28 ^= S00;
+		// ROR(8, 36);
+		tmp[0] = S35;
+		tmp[1] = S34;
+		tmp[2] = S33;
+		tmp[3] = S32;
+		tmp[4] = S31;
+		tmp[5] = S30;
+		tmp[6] = S29;
+		tmp[7] = S28;
+		S35 = S27;
+		S34 = S26;
+		S33 = S25;
+		S32 = S24;
+		S31 = S23;
+		S30 = S22;
+		S29 = S21;
+		S28 = S20;
+		S27 = S19;
+		S26 = S18;
+		S25 = S17;
+		S24 = S16;
+		S23 = S15;
+		S22 = S14;
+		S21 = S13;
+		S20 = S12;
+		S19 = S11;
+		S18 = S10;
+		S17 = S09;
+		S16 = S08;
+		S15 = S07;
+		S14 = S06;
+		S13 = S05;
+		S12 = S04;
+		S11 = S03;
+		S10 = S02;
+		S09 = S01;
+		S08 = S00;
+		S07 = tmp[0];
+		S06 = tmp[1];
+		S05 = tmp[2];
+		S04 = tmp[3];
+		S03 = tmp[4];
+		S02 = tmp[5];
+		S01 = tmp[6];
+		S00 = tmp[7];
+
+		SMIX_2(S00, S01, S02, S03);
+	}
+	// last round isolated
+	S04 ^= S00;
+	S09 ^= S00;
+	S18 ^= S00;
+	S27 ^= S00;
+	SMIX_2(S27, S28, S29, S30);
+	S31 ^= S27;
+	S01 ^= S27;
+	S09 ^= S27;
+	S18 ^= S27;
+	SMIX_2(S18, S19, S20, S21);
+	S22 ^= S18;
+	S09 ^= S18;
+	// ROR(9, 36);
+	do{
+		sph_u32 c0 = 0;
+		sph_u32 c1 = 0;
+		sph_u32 c2 = 0;
+		sph_u32 c3 = 0;
+		sph_u32 r0 = 0;
+		sph_u32 r1 = 0;
+		sph_u32 r2 = 0;
+		sph_u32 r3 = 0;
+		sph_u32 tmp;
+		tmp = mixtab0[S09 >> 24];
+		c0 ^= tmp;
+		tmp = mixtab1[(S09 >> 16) & 0xFF];
+		c0 ^= tmp;
+		r1 ^= tmp;
+		tmp = mixtab2[(S09 >>  8) & 0xFF];
+		c0 ^= tmp;
+		r2 ^= tmp;
+		tmp = mixtab3[S09 & 0xFF];
+		c0 ^= tmp;
+		r3 ^= tmp;
+		tmp = mixtab0[S10 >> 24];
+		c1 ^= tmp;
+		r0 ^= tmp;
+		tmp = mixtab1[(S10 >> 16) & 0xFF];
+		c1 ^= tmp;
+		tmp = mixtab2[(S10 >>  8) & 0xFF];
+		c1 ^= tmp;
+		r2 ^= tmp;
+		tmp = mixtab3[S10 & 0xFF];
+		c1 ^= tmp;
+		r3 ^= tmp;
+		tmp = mixtab0[S11 >> 24];
+		c2 ^= tmp;
+		r0 ^= tmp;
+		tmp = mixtab1[(S11 >> 16) & 0xFF];
+		c2 ^= tmp;
+		r1 ^= tmp;
+		tmp = mixtab2[(S11 >>  8) & 0xFF];
+		c2 ^= tmp;
+		tmp = mixtab3[S11 & 0xFF];
+		c2 ^= tmp;
+		r3 ^= tmp;
+		tmp = mixtab0[S12 >> 24];
+		c3 ^= tmp;
+		r0 ^= tmp;
+		tmp = mixtab1[(S12 >> 16) & 0xFF];
+		c3 ^= tmp;
+		r1 ^= tmp;
+		tmp = mixtab2[(S12 >>  8) & 0xFF];
+		c3 ^= tmp;
+		r2 ^= tmp;
+		tmp = mixtab3[S12 & 0xFF];
+		c3 ^= tmp;
+		S09 = ((c0 ^ r0) & SPH_C32(0xFF000000))
+			| ((c1 ^ r1) & SPH_C32(0x00FF0000))
+			| ((c2 ^ r2) & SPH_C32(0x0000FF00))
+			| ((c3 ^ r3) & SPH_C32(0x000000FF));
+	}
+	while( 0 );
+	S13 ^= S09;
+	return metis4_u32ToBE(S13);
+}
+
+#define TIX4_x(q, x00, x01, x04, x07, x08, x22, x24, x27, x30, _v) \
+	x22##_v ^= x00##_v; \
+	x00##_v = (q); \
+	x08##_v ^= x00##_v; \
+	x01##_v ^= x24##_v; \
+	x04##_v ^= x27##_v; \
+	x07##_v ^= x30##_v;
+
+#define CMIX36_x(x00, x01, x02, x04, x05, x06, x18, x19, x20, _v) \
+	x00##_v ^= x04##_v; \
+	x01##_v ^= x05##_v; \
+	x02##_v ^= x06##_v; \
+	x18##_v ^= x04##_v; \
+	x19##_v ^= x05##_v; \
+	x20##_v ^= x06##_v;
+
+#define SMIX_2_x(x0, x1, x2, x3, _v) \
+	tmpSMIX = mixtab0[x0##_v >> 24]; \
+	c0 = tmpSMIX; \
+	tmpSMIX = mixtab1[(x0##_v >> 16) & 0xFF]; \
+	c0 ^= tmpSMIX; \
+	r1 = tmpSMIX; \
+	tmpSMIX = mixtab2[(x0##_v >>  8) & 0xFF]; \
+	c0 ^= tmpSMIX; \
+	r2 = tmpSMIX; \
+	tmpSMIX = mixtab3[x0##_v & 0xFF]; \
+	c0 ^= tmpSMIX; \
+	r3 = tmpSMIX; \
+	tmpSMIX = mixtab0[x1##_v >> 24]; \
+	c1 = tmpSMIX; \
+	r0 = tmpSMIX; \
+	tmpSMIX = mixtab1[(x1##_v >> 16) & 0xFF]; \
+	c1 ^= tmpSMIX; \
+	tmpSMIX = mixtab2[(x1##_v >>  8) & 0xFF]; \
+	c1 ^= tmpSMIX; \
+	r2 ^= tmpSMIX; \
+	tmpSMIX = mixtab3[x1##_v & 0xFF]; \
+	c1 ^= tmpSMIX; \
+	r3 ^= tmpSMIX; \
+	tmpSMIX = mixtab0[x2##_v >> 24]; \
+	c2 = tmpSMIX; \
+	r0 ^= tmpSMIX; \
+	tmpSMIX = mixtab1[(x2##_v >> 16) & 0xFF]; \
+	c2 ^= tmpSMIX; \
+	r1 ^= tmpSMIX; \
+	tmpSMIX = mixtab2[(x2##_v >>  8) & 0xFF]; \
+	c2 ^= tmpSMIX; \
+	tmpSMIX = mixtab3[x2##_v & 0xFF]; \
+	c2 ^= tmpSMIX; \
+	r3 ^= tmpSMIX; \
+	tmpSMIX = mixtab0[x3##_v >> 24]; \
+	c3 = tmpSMIX; \
+	r0 ^= tmpSMIX; \
+	tmpSMIX = mixtab1[(x3##_v >> 16) & 0xFF]; \
+	c3 ^= tmpSMIX; \
+	r1 ^= tmpSMIX; \
+	tmpSMIX = mixtab2[(x3##_v >>  8) & 0xFF]; \
+	c3 ^= tmpSMIX; \
+	r2 ^= tmpSMIX; \
+	tmpSMIX = mixtab3[x3##_v & 0xFF]; \
+	c3 ^= tmpSMIX; \
+	x0##_v = ((c0 ^ r0) & 0xFF000000) \
+	| ((c1 ^ r1) & 0x00FF0000) \
+	| ((c2 ^ r2) & 0x0000FF00) \
+	| ((c3 ^ r3) & 0x000000FF); \
+	x1##_v = ((c1 ^ (r0 << 8)) & 0xFF000000) \
+	| ((c2 ^ (r1 << 8)) & 0x00FF0000) \
+	| ((c3 ^ (r2 << 8)) & 0x0000FF00) \
+	| ((c0 ^ (r3 >> 24)) & 0x000000FF); \
+	x2##_v = ((c2 ^ (r0 << 16)) & 0xFF000000) \
+	| ((c3 ^ (r1 << 16)) & 0x00FF0000) \
+	| ((c0 ^ (r2 >> 16)) & 0x0000FF00) \
+	| ((c1 ^ (r3 >> 16)) & 0x000000FF); \
+	x3##_v = ((c3 ^ (r0 << 24)) & 0xFF000000) \
+	| ((c0 ^ (r1 >> 8)) & 0x00FF0000) \
+	| ((c1 ^ (r2 >> 8)) & 0x0000FF00) \
+	| ((c2 ^ (r3 >> 8)) & 0x000000FF);
+
+#define ROR8_x(_v) \
+		tmp[0] = S35##_v; \
+		tmp[1] = S34##_v; \
+		tmp[2] = S33##_v; \
+		tmp[3] = S32##_v; \
+		tmp[4] = S31##_v; \
+		tmp[5] = S30##_v; \
+		tmp[6] = S29##_v; \
+		tmp[7] = S28##_v; \
+		S35##_v = S27##_v; \
+		S34##_v = S26##_v; \
+		S33##_v = S25##_v; \
+		S32##_v = S24##_v; \
+		S31##_v = S23##_v; \
+		S30##_v = S22##_v; \
+		S29##_v = S21##_v; \
+		S28##_v = S20##_v; \
+		S27##_v = S19##_v; \
+		S26##_v = S18##_v; \
+		S25##_v = S17##_v; \
+		S24##_v = S16##_v; \
+		S23##_v = S15##_v; \
+		S22##_v = S14##_v; \
+		S21##_v = S13##_v; \
+		S20##_v = S12##_v; \
+		S19##_v = S11##_v; \
+		S18##_v = S10##_v; \
+		S17##_v = S09##_v; \
+		S16##_v = S08##_v; \
+		S15##_v = S07##_v; \
+		S14##_v = S06##_v; \
+		S13##_v = S05##_v; \
+		S12##_v = S04##_v; \
+		S11##_v = S03##_v; \
+		S10##_v = S02##_v; \
+		S09##_v = S01##_v; \
+		S08##_v = S00##_v; \
+		S07##_v = tmp[0]; \
+		S06##_v = tmp[1]; \
+		S05##_v = tmp[2]; \
+		S04##_v = tmp[3]; \
+		S03##_v = tmp[4]; \
+		S02##_v = tmp[5]; \
+		S01##_v = tmp[6]; \
+		S00##_v = tmp[7];
+
+#define ROR9_x(_v) \
+	tmp[0] = S35##_v; \
+	tmp[1] = S34##_v; \
+	tmp[2] = S33##_v; \
+	tmp[3] = S32##_v; \
+	tmp[4] = S31##_v; \
+	tmp[5] = S30##_v; \
+	tmp[6] = S29##_v; \
+	tmp[7] = S28##_v; \
+	tmp[8] = S27##_v; \
+	S35##_v = S26##_v; \
+	S34##_v = S25##_v; \
+	S33##_v = S24##_v; \
+	S32##_v = S23##_v; \
+	S31##_v = S22##_v; \
+	S30##_v = S21##_v; \
+	S29##_v = S20##_v; \
+	S28##_v = S19##_v; \
+	S27##_v = S18##_v; \
+	S26##_v = S17##_v; \
+	S25##_v = S16##_v; \
+	S24##_v = S15##_v; \
+	S23##_v = S14##_v; \
+	S22##_v = S13##_v; \
+	S21##_v = S12##_v; \
+	S20##_v = S11##_v; \
+	S19##_v = S10##_v; \
+	S18##_v = S09##_v; \
+	S17##_v = S08##_v; \
+	S16##_v = S07##_v; \
+	S15##_v = S06##_v; \
+	S14##_v = S05##_v; \
+	S13##_v = S04##_v; \
+	S12##_v = S03##_v; \
+	S11##_v = S02##_v; \
+	S10##_v = S01##_v; \
+	S09##_v = S00##_v; \
+	S08##_v = tmp[0]; \
+	S07##_v = tmp[1]; \
+	S06##_v = tmp[2]; \
+	S05##_v = tmp[3]; \
+	S04##_v = tmp[4]; \
+	S03##_v = tmp[5]; \
+	S02##_v = tmp[6]; \
+	S01##_v = tmp[7]; \
+	S00##_v = tmp[8];
+
+void metis4_core_opt_interleaved(unsigned int* data1, unsigned int* data2, unsigned int* v1, unsigned int* v2)
+{
+	sph_u32 tmp[9];
+	int i;
+	// variables for SMIX
+	sph_u32 c0 = 0;
+	sph_u32 c1 = 0;
+	sph_u32 c2 = 0;
+	sph_u32 c3 = 0;
+	sph_u32 r0 = 0;
+	sph_u32 r1 = 0;
+	sph_u32 r2 = 0;
+	sph_u32 r3 = 0;
+	sph_u32 tmpSMIX;
+	//DECL_STATE_BIG
+	sph_u32 S00a, S01a, S02a, S03a, S04a, S05a, S06a, S07a, S08a, S09a;
+	sph_u32 S10a, S11a, S12a, S13a, S14a, S15a, S16a, S17a, S18a, S19a;
+	sph_u32 S20a, S21a, S22a, S23a, S24a, S25a, S26a, S27a, S28a, S29a;
+	sph_u32 S30a, S31a, S32a, S33a, S34a, S35a;
+	sph_u32 S00b, S01b, S02b, S03b, S04b, S05b, S06b, S07b, S08b, S09b;
+	sph_u32 S10b, S11b, S12b, S13b, S14b, S15b, S16b, S17b, S18b, S19b;
+	sph_u32 S20b, S21b, S22b, S23b, S24b, S25b, S26b, S27b, S28b, S29b;
+	sph_u32 S30b, S31b, S32b, S33b, S34b, S35b;
+	// CORE_ENTRY
+	sph_u32 p;
+	// READ_STATE_BIG(sc);
+	S00b = S00a = 0;
+	S01b = S01a = 0;
+	S02b = S02a = 0;
+	S03b = S03a = 0;
+	S04b = S04a = 0;
+	S05b = S05a = 0;
+	S06b = S06a = 0;
+	S07b = S07a = 0;
+	S08b = S08a = 0;
+	S09b = S09a = 0;
+	S10b = S10a = 0;
+	S11b = S11a = 0;
+	S12b = S12a = 0;
+	S13b = S13a = 0;
+	S14b = S14a = 0;
+	S15b = S15a = 0;
+	S16b = S16a = 0;
+	S17b = S17a = 0;
+	S18b = S18a = 0;
+	S19b = S19a = 0;
+	S20b = S20a = 0x8807a57e;
+	S21b = S21a = 0xe616af75;
+	S22b = S22a = 0xc5d3e4db;
+	S23b = S23a = 0xac9ab027;
+	S24b = S24a = 0xd915f117;
+	S25b = S25a = 0xb6eecc54;
+	S26b = S26a = 0x06e8020b;
+	S27b = S27a = 0x4a92efd1;
+	S28b = S28a = 0xaac6e2c9;
+	S29b = S29a = 0xddb21398;
+	S30b = S30a = 0xcae65838;
+	S31b = S31a = 0x437f203f;
+	S32b = S32a = 0x25ea78e7;
+	S33b = S33a = 0x951fddd6;
+	S34b = S34a = 0xda6ed11d;
+	S35b = S35a = 0xe13e3567;
+	// end of isolated first round
+	for(i=0; i<60/12; i++)
+	{
+		// a
+		p = metis4_u32ToBE(*data1); data1++;
+		TIX4_x(p, S00, S01, S04, S07, S08, S22, S24, S27, S30, a);
+		CMIX36_x(S33, S34, S35, S01, S02, S03, S15, S16, S17, a);
+		SMIX_2_x(S33, S34, S35, S00, a);
+		CMIX36_x(S30, S31, S32, S34, S35, S00, S12, S13, S14, a);
+		SMIX_2_x(S30, S31, S32, S33, a);
+		CMIX36_x(S27, S28, S29, S31, S32, S33, S09, S10, S11, a);
+		SMIX_2_x(S27, S28, S29, S30, a);
+		CMIX36_x(S24, S25, S26, S28, S29, S30, S06, S07, S08, a);
+		SMIX_2_x(S24, S25, S26, S27, a);
+		p = metis4_u32ToBE(*data1); data1++;
+		TIX4_x(p, S24, S25, S28, S31, S32, S10, S12, S15, S18, a);
+		CMIX36_x(S21, S22, S23, S25, S26, S27, S03, S04, S05, a);
+		SMIX_2_x(S21, S22, S23, S24, a);
+		CMIX36_x(S18, S19, S20, S22, S23, S24, S00, S01, S02, a);
+		SMIX_2_x(S18, S19, S20, S21, a);
+		CMIX36_x(S15, S16, S17, S19, S20, S21, S33, S34, S35, a);
+		SMIX_2_x(S15, S16, S17, S18, a);
+		CMIX36_x(S12, S13, S14, S16, S17, S18, S30, S31, S32, a);
+		SMIX_2_x(S12, S13, S14, S15, a);
+		p = metis4_u32ToBE(*data1); data1++;
+		TIX4_x(p, S12, S13, S16, S19, S20, S34, S00, S03, S06, a);
+		CMIX36_x(S09, S10, S11, S13, S14, S15, S27, S28, S29, a);
+		SMIX_2_x(S09, S10, S11, S12, a);
+		CMIX36_x(S06, S07, S08, S10, S11, S12, S24, S25, S26, a);
+		SMIX_2_x(S06, S07, S08, S09, a);
+		CMIX36_x(S03, S04, S05, S07, S08, S09, S21, S22, S23, a);
+		SMIX_2_x(S03, S04, S05, S06, a);
+		CMIX36_x(S00, S01, S02, S04, S05, S06, S18, S19, S20, a);
+		SMIX_2_x(S00, S01, S02, S03, a);
+		// b
+		p = metis4_u32ToBE(*data2); data2++;
+		TIX4_x(p, S00, S01, S04, S07, S08, S22, S24, S27, S30, b);
+		CMIX36_x(S33, S34, S35, S01, S02, S03, S15, S16, S17, b);
+		SMIX_2_x(S33, S34, S35, S00, b);
+		CMIX36_x(S30, S31, S32, S34, S35, S00, S12, S13, S14, b);
+		SMIX_2_x(S30, S31, S32, S33, b);
+		CMIX36_x(S27, S28, S29, S31, S32, S33, S09, S10, S11, b);
+		SMIX_2_x(S27, S28, S29, S30, b);
+		CMIX36_x(S24, S25, S26, S28, S29, S30, S06, S07, S08, b);
+		SMIX_2_x(S24, S25, S26, S27, b);
+		p = metis4_u32ToBE(*data2); data2++;
+		TIX4_x(p, S24, S25, S28, S31, S32, S10, S12, S15, S18, b);
+		CMIX36_x(S21, S22, S23, S25, S26, S27, S03, S04, S05, b);
+		SMIX_2_x(S21, S22, S23, S24, b);
+		CMIX36_x(S18, S19, S20, S22, S23, S24, S00, S01, S02, b);
+		SMIX_2_x(S18, S19, S20, S21, b);
+		CMIX36_x(S15, S16, S17, S19, S20, S21, S33, S34, S35, b);
+		SMIX_2_x(S15, S16, S17, S18, b);
+		CMIX36_x(S12, S13, S14, S16, S17, S18, S30, S31, S32, b);
+		SMIX_2_x(S12, S13, S14, S15, b);
+		p = metis4_u32ToBE(*data2); data2++;
+		TIX4_x(p, S12, S13, S16, S19, S20, S34, S00, S03, S06, b);
+		CMIX36_x(S09, S10, S11, S13, S14, S15, S27, S28, S29, b);
+		SMIX_2_x(S09, S10, S11, S12, b);
+		CMIX36_x(S06, S07, S08, S10, S11, S12, S24, S25, S26, b);
+		SMIX_2_x(S06, S07, S08, S09, b);
+		CMIX36_x(S03, S04, S05, S07, S08, S09, S21, S22, S23, b);
+		SMIX_2_x(S03, S04, S05, S06, b);
+		CMIX36_x(S00, S01, S02, S04, S05, S06, S18, S19, S20, b);
+		SMIX_2_x(S00, S01, S02, S03, b);
+	}
+	// final (close round for a)
+	p = metis4_u32ToBE(*data1); data1++;
+	TIX4_x(p, S00, S01, S04, S07, S08, S22, S24, S27, S30, a);
+	CMIX36_x(S33, S34, S35, S01, S02, S03, S15, S16, S17, a);
+	SMIX_2_x(S33, S34, S35, S00, a);
+	CMIX36_x(S30, S31, S32, S34, S35, S00, S12, S13, S14, a);
+	SMIX_2_x(S30, S31, S32, S33, a);
+	CMIX36_x(S27, S28, S29, S31, S32, S33, S09, S10, S11, a);
+	SMIX_2_x(S27, S28, S29, S30, a);
+	CMIX36_x(S24, S25, S26, S28, S29, S30, S06, S07, S08, a);
+	SMIX_2_x(S24, S25, S26, S27, a);
+	TIX4_x(0, S24, S25, S28, S31, S32, S10, S12, S15, S18, a);
+	CMIX36_x(S21, S22, S23, S25, S26, S27, S03, S04, S05, a);
+	SMIX_2_x(S21, S22, S23, S24, a);
+	CMIX36_x(S18, S19, S20, S22, S23, S24, S00, S01, S02, a);
+	SMIX_2_x(S18, S19, S20, S21, a);
+	CMIX36_x(S15, S16, S17, S19, S20, S21, S33, S34, S35, a);
+	SMIX_2_x(S15, S16, S17, S18, a);
+	CMIX36_x(S12, S13, S14, S16, S17, S18, S30, S31, S32, a);
+	SMIX_2_x(S12, S13, S14, S15, a);
+	TIX4_x(0x200, S12, S13, S16, S19, S20, S34, S00, S03, S06, a);
+	CMIX36_x(S09, S10, S11, S13, S14, S15, S27, S28, S29, a);
+	SMIX_2_x(S09, S10, S11, S12, a);
+	CMIX36_x(S06, S07, S08, S10, S11, S12, S24, S25, S26, a);
+	SMIX_2_x(S06, S07, S08, S09, a);
+	CMIX36_x(S03, S04, S05, S07, S08, S09, S21, S22, S23, a);
+	SMIX_2_x(S03, S04, S05, S06, a);
+	CMIX36_x(S00, S01, S02, S04, S05, S06, S18, S19, S20, a);
+	SMIX_2_x(S00, S01, S02, S03, a);
+	// final (close round for b)
+	p = metis4_u32ToBE(*data2); data2++;
+	TIX4_x(p, S00, S01, S04, S07, S08, S22, S24, S27, S30, b);
+	CMIX36_x(S33, S34, S35, S01, S02, S03, S15, S16, S17, b);
+	SMIX_2_x(S33, S34, S35, S00, b);
+	CMIX36_x(S30, S31, S32, S34, S35, S00, S12, S13, S14, b);
+	SMIX_2_x(S30, S31, S32, S33, b);
+	CMIX36_x(S27, S28, S29, S31, S32, S33, S09, S10, S11, b);
+	SMIX_2_x(S27, S28, S29, S30, b);
+	CMIX36_x(S24, S25, S26, S28, S29, S30, S06, S07, S08, b);
+	SMIX_2_x(S24, S25, S26, S27, b);
+	TIX4_x(0, S24, S25, S28, S31, S32, S10, S12, S15, S18, b);
+	CMIX36_x(S21, S22, S23, S25, S26, S27, S03, S04, S05, b);
+	SMIX_2_x(S21, S22, S23, S24, b);
+	CMIX36_x(S18, S19, S20, S22, S23, S24, S00, S01, S02, b);
+	SMIX_2_x(S18, S19, S20, S21, b);
+	CMIX36_x(S15, S16, S17, S19, S20, S21, S33, S34, S35, b);
+	SMIX_2_x(S15, S16, S17, S18, b);
+	CMIX36_x(S12, S13, S14, S16, S17, S18, S30, S31, S32, b);
+	SMIX_2_x(S12, S13, S14, S15, b);
+	TIX4_x(0x200, S12, S13, S16, S19, S20, S34, S00, S03, S06, b);
+	CMIX36_x(S09, S10, S11, S13, S14, S15, S27, S28, S29, b);
+	SMIX_2_x(S09, S10, S11, S12, b);
+	CMIX36_x(S06, S07, S08, S10, S11, S12, S24, S25, S26, b);
+	SMIX_2_x(S06, S07, S08, S09, b);
+	CMIX36_x(S03, S04, S05, S07, S08, S09, S21, S22, S23, b);
+	SMIX_2_x(S03, S04, S05, S06, b);
+	CMIX36_x(S00, S01, S02, S04, S05, S06, S18, S19, S20, b);
+	SMIX_2_x(S00, S01, S02, S03, b);
+	// close logic
+	for (i = 0; i < 32; i ++)
+	{
+		//ROR(3, 36); a
+		tmp[0] = S35a;
+		tmp[1] = S34a;
+		tmp[2] = S33a;
+		S35a = S32a;
+		S34a = S31a;
+		S33a = S30a;
+		S32a = S29a;
+		S31a = S28a;
+		S30a = S27a;
+		S29a = S26a;
+		S28a = S25a;
+		S27a = S24a;
+		S26a = S23a;
+		S25a = S22a;
+		S24a = S21a;
+		S23a = S20a;
+		S22a = S19a;
+		S21a = S18a;
+		S20a = S17a;
+		S19a = S16a;
+		S18a = S15a;
+		S17a = S14a;
+		S16a = S13a;
+		S15a = S12a;
+		S14a = S11a;
+		S13a = S10a;
+		S12a = S09a;
+		S11a = S08a;
+		S10a = S07a;
+		S09a = S06a;
+		S08a = S05a;
+		S07a = S04a;
+		S06a = S03a;
+		S05a = S02a;
+		S04a = S01a;
+		S03a = S00a;
+		S02a = tmp[0];
+		S01a = tmp[1];
+		S00a = tmp[2];
+		CMIX36_x(S00, S01, S02, S04, S05, S06, S18, S19, S20, a);
+		SMIX_2_x(S00, S01, S02, S03, a);
+		//ROR(3, 36); b
+		tmp[0] = S35b;
+		tmp[1] = S34b;
+		tmp[2] = S33b;
+		S35b = S32b;
+		S34b = S31b;
+		S33b = S30b;
+		S32b = S29b;
+		S31b = S28b;
+		S30b = S27b;
+		S29b = S26b;
+		S28b = S25b;
+		S27b = S24b;
+		S26b = S23b;
+		S25b = S22b;
+		S24b = S21b;
+		S23b = S20b;
+		S22b = S19b;
+		S21b = S18b;
+		S20b = S17b;
+		S19b = S16b;
+		S18b = S15b;
+		S17b = S14b;
+		S16b = S13b;
+		S15b = S12b;
+		S14b = S11b;
+		S13b = S10b;
+		S12b = S09b;
+		S11b = S08b;
+		S10b = S07b;
+		S09b = S06b;
+		S08b = S05b;
+		S07b = S04b;
+		S06b = S03b;
+		S05b = S02b;
+		S04b = S01b;
+		S03b = S00b;
+		S02b = tmp[0];
+		S01b = tmp[1];
+		S00b = tmp[2];
+		CMIX36_x(S00, S01, S02, S04, S05, S06, S18, S19, S20, b);
+		SMIX_2_x(S00, S01, S02, S03, b);
+	}
+	for (i = 0; i < 12; i ++) 
+	{
+		S04a ^= S00a;
+		S09a ^= S00a;
+		S18a ^= S00a;
+		S27a ^= S00a;
+		S04b ^= S00b;
+		S09b ^= S00b;
+		S18b ^= S00b;
+		S27b ^= S00b;
+		//ROR(9, 36);
+		ROR9_x(a);
+		ROR9_x(b);
+		SMIX_2_x(S00, S01, S02, S03, a);
+		SMIX_2_x(S00, S01, S02, S03, b);
+		S04a ^= S00a;
+		S10a ^= S00a;
+		S18a ^= S00a;
+		S27a ^= S00a;
+		S04b ^= S00b;
+		S10b ^= S00b;
+		S18b ^= S00b;
+		S27b ^= S00b;
+		//ROR(9, 36);
+		ROR9_x(a);
+		ROR9_x(b);
+		SMIX_2_x(S00, S01, S02, S03, a);
+		SMIX_2_x(S00, S01, S02, S03, b);
+		S04a ^= S00a;
+		S10a ^= S00a;
+		S19a ^= S00a;
+		S27a ^= S00a;
+		S04b ^= S00b;
+		S10b ^= S00b;
+		S19b ^= S00b;
+		S27b ^= S00b;
+		// ROR(9, 36);
+		ROR9_x(a);
+		ROR9_x(b);
+		SMIX_2_x(S00, S01, S02, S03, a);
+		SMIX_2_x(S00, S01, S02, S03, b);
+		S04a ^= S00a;
+		S10a ^= S00a;
+		S19a ^= S00a;
+		S28a ^= S00a;
+		S04b ^= S00b;
+		S10b ^= S00b;
+		S19b ^= S00b;
+		S28b ^= S00b;
+		// ROR(8, 36);
+		ROR8_x(a);
+		ROR8_x(b);
+		SMIX_2_x(S00, S01, S02, S03, a);
+		SMIX_2_x(S00, S01, S02, S03, b);	
+	}
+	// last round isolated a
+	S04a ^= S00a;
+	S09a ^= S00a;
+	S18a ^= S00a;
+	S27a ^= S00a;
+	SMIX_2_x(S27, S28, S29, S30, a);
+	S31a ^= S27a;
+	S01a ^= S27a;
+	S09a ^= S27a;
+	S18a ^= S27a;
+	SMIX_2_x(S18, S19, S20, S21, a);
+	S22a ^= S18a;
+	S09a ^= S18a;
+	// last round isolated b
+	S04b ^= S00b;
+	S09b ^= S00b;
+	S18b ^= S00b;
+	S27b ^= S00b;
+	SMIX_2_x(S27, S28, S29, S30, b);
+	S31b ^= S27b;
+	S01b ^= S27b;
+	S09b ^= S27b;
+	S18b ^= S27b;
+	SMIX_2_x(S18, S19, S20, S21, b);
+	S22b ^= S18b;
+	S09b ^= S18b;
+	// ROR(9, 36);
+	do{
+		sph_u32 c0 = 0;
+		sph_u32 c1 = 0;
+		sph_u32 c2 = 0;
+		sph_u32 c3 = 0;
+		sph_u32 r0 = 0;
+		sph_u32 r1 = 0;
+		sph_u32 r2 = 0;
+		sph_u32 r3 = 0;
+		sph_u32 tmp;
+		tmp = mixtab0[S09a >> 24];
+		c0 ^= tmp;
+		tmp = mixtab1[(S09a >> 16) & 0xFF];
+		c0 ^= tmp;
+		r1 ^= tmp;
+		tmp = mixtab2[(S09a >>  8) & 0xFF];
+		c0 ^= tmp;
+		r2 ^= tmp;
+		tmp = mixtab3[S09a & 0xFF];
+		c0 ^= tmp;
+		r3 ^= tmp;
+		tmp = mixtab0[S10a >> 24];
+		c1 ^= tmp;
+		r0 ^= tmp;
+		tmp = mixtab1[(S10a >> 16) & 0xFF];
+		c1 ^= tmp;
+		tmp = mixtab2[(S10a >>  8) & 0xFF];
+		c1 ^= tmp;
+		r2 ^= tmp;
+		tmp = mixtab3[S10a & 0xFF];
+		c1 ^= tmp;
+		r3 ^= tmp;
+		tmp = mixtab0[S11a >> 24];
+		c2 ^= tmp;
+		r0 ^= tmp;
+		tmp = mixtab1[(S11a >> 16) & 0xFF];
+		c2 ^= tmp;
+		r1 ^= tmp;
+		tmp = mixtab2[(S11a >>  8) & 0xFF];
+		c2 ^= tmp;
+		tmp = mixtab3[S11a & 0xFF];
+		c2 ^= tmp;
+		r3 ^= tmp;
+		tmp = mixtab0[S12a >> 24];
+		c3 ^= tmp;
+		r0 ^= tmp;
+		tmp = mixtab1[(S12a >> 16) & 0xFF];
+		c3 ^= tmp;
+		r1 ^= tmp;
+		tmp = mixtab2[(S12a >>  8) & 0xFF];
+		c3 ^= tmp;
+		r2 ^= tmp;
+		tmp = mixtab3[S12a & 0xFF];
+		c3 ^= tmp;
+		S09a = ((c0 ^ r0) & SPH_C32(0xFF000000))
+			| ((c1 ^ r1) & SPH_C32(0x00FF0000))
+			| ((c2 ^ r2) & SPH_C32(0x0000FF00))
+			| ((c3 ^ r3) & SPH_C32(0x000000FF));
+	}
+	while( 0 );
+	S13a ^= S09a;
+	*v1 = metis4_u32ToBE(S13a);
+	// b
+	do{
+		sph_u32 c0 = 0;
+		sph_u32 c1 = 0;
+		sph_u32 c2 = 0;
+		sph_u32 c3 = 0;
+		sph_u32 r0 = 0;
+		sph_u32 r1 = 0;
+		sph_u32 r2 = 0;
+		sph_u32 r3 = 0;
+		sph_u32 tmp;
+		tmp = mixtab0[S09b >> 24];
+		c0 ^= tmp;
+		tmp = mixtab1[(S09b >> 16) & 0xFF];
+		c0 ^= tmp;
+		r1 ^= tmp;
+		tmp = mixtab2[(S09b >>  8) & 0xFF];
+		c0 ^= tmp;
+		r2 ^= tmp;
+		tmp = mixtab3[S09b & 0xFF];
+		c0 ^= tmp;
+		r3 ^= tmp;
+		tmp = mixtab0[S10b >> 24];
+		c1 ^= tmp;
+		r0 ^= tmp;
+		tmp = mixtab1[(S10b >> 16) & 0xFF];
+		c1 ^= tmp;
+		tmp = mixtab2[(S10b >>  8) & 0xFF];
+		c1 ^= tmp;
+		r2 ^= tmp;
+		tmp = mixtab3[S10b & 0xFF];
+		c1 ^= tmp;
+		r3 ^= tmp;
+		tmp = mixtab0[S11b >> 24];
+		c2 ^= tmp;
+		r0 ^= tmp;
+		tmp = mixtab1[(S11b >> 16) & 0xFF];
+		c2 ^= tmp;
+		r1 ^= tmp;
+		tmp = mixtab2[(S11b >>  8) & 0xFF];
+		c2 ^= tmp;
+		tmp = mixtab3[S11b & 0xFF];
+		c2 ^= tmp;
+		r3 ^= tmp;
+		tmp = mixtab0[S12b >> 24];
+		c3 ^= tmp;
+		r0 ^= tmp;
+		tmp = mixtab1[(S12b >> 16) & 0xFF];
+		c3 ^= tmp;
+		r1 ^= tmp;
+		tmp = mixtab2[(S12b >>  8) & 0xFF];
+		c3 ^= tmp;
+		r2 ^= tmp;
+		tmp = mixtab3[S12b & 0xFF];
+		c3 ^= tmp;
+		S09b = ((c0 ^ r0) & SPH_C32(0xFF000000))
+			| ((c1 ^ r1) & SPH_C32(0x00FF0000))
+			| ((c2 ^ r2) & SPH_C32(0x0000FF00))
+			| ((c3 ^ r3) & SPH_C32(0x000000FF));
+	}
+	while( 0 );
+	S13b ^= S09b;
+	*v2 = metis4_u32ToBE(S13b);
+}
+
+
+void metis4_core_opt_p1(unsigned int* data, unsigned int* pOut)
+{
+	sph_u32 tmp[9];
+	int i;
+	// variables for SMIX
+	sph_u32 c0 = 0;
+	sph_u32 c1 = 0;
+	sph_u32 c2 = 0;
+	sph_u32 c3 = 0;
+	sph_u32 r0 = 0;
+	sph_u32 r1 = 0;
+	sph_u32 r2 = 0;
+	sph_u32 r3 = 0;
+	sph_u32 tmpSMIX;
+	//DECL_STATE_BIG
+	sph_u32 S00, S01, S02, S03, S04, S05, S06, S07, S08, S09;
+	sph_u32 S10, S11, S12, S13, S14, S15, S16, S17, S18, S19;
+	sph_u32 S20, S21, S22, S23, S24, S25, S26, S27, S28, S29;
+	sph_u32 S30, S31, S32, S33, S34, S35;
+	// CORE_ENTRY
+	sph_u32 p;
+	p = metis4_u32ToBE(*data);
+	data++;
+	// READ_STATE_BIG(sc);
+	S00 = 0;
+	S01 = 0;
+	S02 = 0;
+	S03 = 0;
+	S04 = 0;
+	S05 = 0;
+	S06 = 0;
+	S07 = 0;
+	S08 = 0;
+	S09 = 0;
+	S10 = 0;
+	S11 = 0;
+	S12 = 0;
+	S13 = 0;
+	S14 = 0;
+	S15 = 0;
+	S16 = 0;
+	S17 = 0;
+	S18 = 0;
+	S19 = 0;
+	S20 = 0x8807a57e;
+	S21 = 0xe616af75;
+	S22 = 0xc5d3e4db;
+	S23 = 0xac9ab027;
+	S24 = 0xd915f117;
+	S25 = 0xb6eecc54;
+	S26 = 0x06e8020b;
+	S27 = 0x4a92efd1;
+	S28 = 0xaac6e2c9;
+	S29 = 0xddb21398;
+	S30 = 0xcae65838;
+	S31 = 0x437f203f;
+	S32 = 0x25ea78e7;
+	S33 = 0x951fddd6;
+	S34 = 0xda6ed11d;
+	S35 = 0xe13e3567;
+
+	//// isolated first round
+	//// TIX4(q, x00, x01, x04, x07, x08, x22, x24, x27, x30) \
+	//// TIX4(p, S00, S01, S04, S07, S08, S22, S24, S27, S30);
+	//S00 = p;
+	//S08 ^= S00;
+	//S22 = 0xc5d3e4db;
+	//S01 = 0xd915f117;
+	//S04 = 0x4a92efd1;
+	//S07 = 0xcae65838;
+	//// dynamic: S00, S08
+	//// CMIX36(S33, S34, S35, S01, S02, S03, S15, S16, S17);
+	//S33 = 0x4c0a2cc1;//S01;
+	//S34 = 0xda6ed11d;//S02;
+	//S35 = 0xe13e3567;//S35;//S03;
+	//S15 = 0xd915f117;//S01;
+	//S16 = 0x00000000;//S02;
+	//S17 = 0x00000000;//S03;
+	//// SMIX_2(S33, S34, S35, S00);
+	//c0 = 0x9ae23283;
+	//c1 = 0x0361b92d;
+	//c2 = 0x4c92d8ed;
+	//r0 = 0xafaf608a;
+	//r1 = 0x79d5d51d;
+	//r2 = 0xf6274f4f;
+	//r3 = 0x59947f59;
+	//c3 = mixtab0[S00 >> 24];
+	//r0 ^= c3;
+	//tmpSMIX = mixtab1[(S00 >> 16) & 0xFF];
+	//c3 ^= tmpSMIX;
+	//r1 ^= tmpSMIX;
+	//tmpSMIX = mixtab2[(S00 >>  8) & 0xFF];
+	//c3 ^= tmpSMIX;
+	//r2 ^= tmpSMIX;
+	//tmpSMIX = mixtab3[S00 & 0xFF];
+	//c3 ^= tmpSMIX;
+	//S33 = ((c0 ^ r0) & 0xFF000000)
+	//| ((c1 ^ r1) & 0x00FF0000)
+	//| ((c2 ^ r2) & 0x0000FF00)
+	//| ((c3 ^ r3) & 0x000000FF);
+	//S34 = ((c1 ^ (r0 << 8)) & 0xFF000000)
+	//| ((c2 ^ (r1 << 8)) & 0x00FF0000)
+	//| ((c3 ^ (r2 << 8)) & 0x0000FF00)
+	//| ((c0 ^ (r3 >> 24)) & 0x000000FF);
+	//S35 = ((c2 ^ (r0 << 16)) & 0xFF000000)
+	//| ((c3 ^ (r1 << 16)) & 0x00FF0000)
+	//| ((c0 ^ (r2 >> 16)) & 0x0000FF00)
+	//| ((c1 ^ (r3 >> 16)) & 0x000000FF);
+	//S00 = ((c3 ^ (r0 << 24)) & 0xFF000000)
+	//| ((c0 ^ (r1 >> 8)) & 0x00FF0000)
+	//| ((c1 ^ (r2 >> 8)) & 0x0000FF00)
+	//| ((c2 ^ (r3 >> 8)) & 0x000000FF);
+	//// dynamic: S00, S08, S33, S34, S35
+	//CMIX36(S30, S31, S32, S34, S35, S00, S12, S13, S14);
+	//SMIX_2(S30, S31, S32, S33);
+	//CMIX36(S27, S28, S29, S31, S32, S33, S09, S10, S11);
+	//SMIX_2(S27, S28, S29, S30);
+	//CMIX36(S24, S25, S26, S28, S29, S30, S06, S07, S08);
+	//SMIX_2(S24, S25, S26, S27);
+	////NEXT(1);
+	//p = metis4_u32ToBE(*data);
+	//data++;
+	//TIX4(p, S24, S25, S28, S31, S32, S10, S12, S15, S18);
+	//CMIX36(S21, S22, S23, S25, S26, S27, S03, S04, S05);
+	//SMIX_2(S21, S22, S23, S24);
+	//CMIX36(S18, S19, S20, S22, S23, S24, S00, S01, S02);
+	//SMIX_2(S18, S19, S20, S21);
+	//CMIX36(S15, S16, S17, S19, S20, S21, S33, S34, S35);
+	//SMIX_2(S15, S16, S17, S18);
+	//CMIX36(S12, S13, S14, S16, S17, S18, S30, S31, S32);
+	//SMIX_2(S12, S13, S14, S15);
+	//p = metis4_u32ToBE(*data);
+	//data++;
+	//TIX4(p, S12, S13, S16, S19, S20, S34, S00, S03, S06);
+	//CMIX36(S09, S10, S11, S13, S14, S15, S27, S28, S29);
+	//SMIX_2(S09, S10, S11, S12);
+	//CMIX36(S06, S07, S08, S10, S11, S12, S24, S25, S26);
+	//SMIX_2(S06, S07, S08, S09);
+	//CMIX36(S03, S04, S05, S07, S08, S09, S21, S22, S23);
+	//SMIX_2(S03, S04, S05, S06);
+	//CMIX36(S00, S01, S02, S04, S05, S06, S18, S19, S20);
+	//SMIX_2(S00, S01, S02, S03);
+	//p = metis4_u32ToBE(*data);
+	//data++;
+	// end of isolated first round
+	for(i=0; i<60/12; i++)
+	{
+		//q = p;
+		TIX4(p, S00, S01, S04, S07, S08, S22, S24, S27, S30);
+		CMIX36(S33, S34, S35, S01, S02, S03, S15, S16, S17);
+		SMIX_2(S33, S34, S35, S00);
+		CMIX36(S30, S31, S32, S34, S35, S00, S12, S13, S14);
+		SMIX_2(S30, S31, S32, S33);
+		CMIX36(S27, S28, S29, S31, S32, S33, S09, S10, S11);
+		SMIX_2(S27, S28, S29, S30);
+		CMIX36(S24, S25, S26, S28, S29, S30, S06, S07, S08);
+		SMIX_2(S24, S25, S26, S27);
+		//NEXT(1);
+		p = metis4_u32ToBE(*data);
+		data++;
+		TIX4(p, S24, S25, S28, S31, S32, S10, S12, S15, S18);
+		CMIX36(S21, S22, S23, S25, S26, S27, S03, S04, S05);
+		SMIX_2(S21, S22, S23, S24);
+		CMIX36(S18, S19, S20, S22, S23, S24, S00, S01, S02);
+		SMIX_2(S18, S19, S20, S21);
+		CMIX36(S15, S16, S17, S19, S20, S21, S33, S34, S35);
+		SMIX_2(S15, S16, S17, S18);
+		CMIX36(S12, S13, S14, S16, S17, S18, S30, S31, S32);
+		SMIX_2(S12, S13, S14, S15);
+		p = metis4_u32ToBE(*data);
+		data++;
+		TIX4(p, S12, S13, S16, S19, S20, S34, S00, S03, S06);
+		CMIX36(S09, S10, S11, S13, S14, S15, S27, S28, S29);
+		SMIX_2(S09, S10, S11, S12);
+		CMIX36(S06, S07, S08, S10, S11, S12, S24, S25, S26);
+		SMIX_2(S06, S07, S08, S09);
+		CMIX36(S03, S04, S05, S07, S08, S09, S21, S22, S23);
+		SMIX_2(S03, S04, S05, S06);
+		CMIX36(S00, S01, S02, S04, S05, S06, S18, S19, S20);
+		SMIX_2(S00, S01, S02, S03);
+		p = metis4_u32ToBE(*data);
+		data++;
+	}
+	// final (close round)
+	TIX4(p, S00, S01, S04, S07, S08, S22, S24, S27, S30);
+	CMIX36(S33, S34, S35, S01, S02, S03, S15, S16, S17);
+	SMIX_2(S33, S34, S35, S00);
+	CMIX36(S30, S31, S32, S34, S35, S00, S12, S13, S14);
+	SMIX_2(S30, S31, S32, S33);
+	CMIX36(S27, S28, S29, S31, S32, S33, S09, S10, S11);
+	SMIX_2(S27, S28, S29, S30);
+	CMIX36(S24, S25, S26, S28, S29, S30, S06, S07, S08);
+	SMIX_2(S24, S25, S26, S27);
+	//NEXT(1);
+	TIX4(0, S24, S25, S28, S31, S32, S10, S12, S15, S18);
+	CMIX36(S21, S22, S23, S25, S26, S27, S03, S04, S05);
+	SMIX_2(S21, S22, S23, S24);
+	CMIX36(S18, S19, S20, S22, S23, S24, S00, S01, S02);
+	SMIX_2(S18, S19, S20, S21);
+	CMIX36(S15, S16, S17, S19, S20, S21, S33, S34, S35);
+	SMIX_2(S15, S16, S17, S18);
+	CMIX36(S12, S13, S14, S16, S17, S18, S30, S31, S32);
+	SMIX_2(S12, S13, S14, S15);
+	TIX4(0x200, S12, S13, S16, S19, S20, S34, S00, S03, S06);
+	CMIX36(S09, S10, S11, S13, S14, S15, S27, S28, S29);
+	SMIX_2(S09, S10, S11, S12);
+	CMIX36(S06, S07, S08, S10, S11, S12, S24, S25, S26);
+	SMIX_2(S06, S07, S08, S09);
+	CMIX36(S03, S04, S05, S07, S08, S09, S21, S22, S23);
+	SMIX_2(S03, S04, S05, S06);
+	CMIX36(S00, S01, S02, S04, S05, S06, S18, S19, S20);
+	SMIX_2(S00, S01, S02, S03);
+	
+	pOut[0] = S00;
+	pOut[1] = S01;
+	pOut[2] = S02;
+	pOut[3] = S03;
+	pOut[4] = S04;
+	pOut[5] = S05;
+	pOut[6] = S06;
+	pOut[7] = S07;
+	pOut[8] = S08;
+	pOut[9] = S09;
+	pOut[10] = S10;
+	pOut[11] = S11;
+	pOut[12] = S12;
+	pOut[13] = S13;
+	pOut[14] = S14;
+	pOut[15] = S15;
+	pOut[16] = S16;
+	pOut[17] = S17;
+	pOut[18] = S18;
+	pOut[19] = S19;
+	pOut[20] = S20;
+	pOut[21] = S21;
+	pOut[22] = S22;
+	pOut[23] = S23;
+	pOut[24] = S24;
+	pOut[25] = S25;
+	pOut[26] = S26;
+	pOut[27] = S27;
+	pOut[28] = S28;
+	pOut[29] = S29;
+	pOut[30] = S30;
+	pOut[31] = S31;
+	pOut[32] = S32;
+	pOut[33] = S33;
+	pOut[34] = S34;
+	pOut[35] = S35;
+}
+
+
+unsigned int metis4_core_opt_p2(unsigned int* pIn)
+{
+	sph_u32 tmp[9];
+	int i;
+	// variables for SMIX
+	sph_u32 c0 = 0;
+	sph_u32 c1 = 0;
+	sph_u32 c2 = 0;
+	sph_u32 c3 = 0;
+	sph_u32 r0 = 0;
+	sph_u32 r1 = 0;
+	sph_u32 r2 = 0;
+	sph_u32 r3 = 0;
+	sph_u32 tmpSMIX;
+	//DECL_STATE_BIG
+	sph_u32 S00, S01, S02, S03, S04, S05, S06, S07, S08, S09;
+	sph_u32 S10, S11, S12, S13, S14, S15, S16, S17, S18, S19;
+	sph_u32 S20, S21, S22, S23, S24, S25, S26, S27, S28, S29;
+	sph_u32 S30, S31, S32, S33, S34, S35;
+	
+	S00 = pIn[0];
+	S01 = pIn[1];
+	S02 = pIn[2];
+	S03 = pIn[3];
+	S04 = pIn[4];
+	S05 = pIn[5];
+	S06 = pIn[6];
+	S07 = pIn[7];
+	S08 = pIn[8];
+	S09 = pIn[9];
+	S10 = pIn[10];
+	S11 = pIn[11];
+	S12 = pIn[12];
+	S13 = pIn[13];
+	S14 = pIn[14];
+	S15 = pIn[15];
+	S16 = pIn[16];
+	S17 = pIn[17];
+	S18 = pIn[18];
+	S19 = pIn[19];
+	S20 = pIn[20];
+	S21 = pIn[21];
+	S22 = pIn[22];
+	S23 = pIn[23];
+	S24 = pIn[24];
+	S25 = pIn[25];
+	S26 = pIn[26];
+	S27 = pIn[27];
+	S28 = pIn[28];
+	S29 = pIn[29];
+	S30 = pIn[30];
+	S31 = pIn[31];
+	S32 = pIn[32];
+	S33 = pIn[33];
+	S34 = pIn[34];
+	S35 = pIn[35];
+	// close logic
+	for (i = 0; i < 32; i ++)
+	{
+		//ROR(3, 36); (n, s) <-- ?
+		sph_u32 tmp[3];
+		tmp[0] = S35;
+		tmp[1] = S34;
+		tmp[2] = S33;
+		S35 = S32;
+		S34 = S31;
+		S33 = S30;
+		S32 = S29;
+		S31 = S28;
+		S30 = S27;
+		S29 = S26;
+		S28 = S25;
+		S27 = S24;
+		S26 = S23;
+		S25 = S22;
+		S24 = S21;
+		S23 = S20;
+		S22 = S19;
+		S21 = S18;
+		S20 = S17;
+		S19 = S16;
+		S18 = S15;
+		S17 = S14;
+		S16 = S13;
+		S15 = S12;
+		S14 = S11;
+		S13 = S10;
+		S12 = S09;
+		S11 = S08;
+		S10 = S07;
+		S09 = S06;
+		S08 = S05;
+		S07 = S04;
+		S06 = S03;
+		S05 = S02;
+		S04 = S01;
+		S03 = S00;
+		S02 = tmp[0];
+		S01 = tmp[1];
+		S00 = tmp[2];
+		CMIX36(S00, S01, S02, S04, S05, S06, S18, S19, S20);
+		SMIX_2(S00, S01, S02, S03);
+	}
+	for (i = 0; i < 12; i ++) 
+	{
+		S04 ^= S00;
+		S09 ^= S00;
+		S18 ^= S00;
+		S27 ^= S00;
+		//ROR(9, 36);
+		tmp[0] = S35;
+		tmp[1] = S34;
+		tmp[2] = S33;
+		tmp[3] = S32;
+		tmp[4] = S31;
+		tmp[5] = S30;
+		tmp[6] = S29;
+		tmp[7] = S28;
+		tmp[8] = S27;
+		S35 = S26;
+		S34 = S25;
+		S33 = S24;
+		S32 = S23;
+		S31 = S22;
+		S30 = S21;
+		S29 = S20;
+		S28 = S19;
+		S27 = S18;
+		S26 = S17;
+		S25 = S16;
+		S24 = S15;
+		S23 = S14;
+		S22 = S13;
+		S21 = S12;
+		S20 = S11;
+		S19 = S10;
+		S18 = S09;
+		S17 = S08;
+		S16 = S07;
+		S15 = S06;
+		S14 = S05;
+		S13 = S04;
+		S12 = S03;
+		S11 = S02;
+		S10 = S01;
+		S09 = S00;
+		S08 = tmp[0];
+		S07 = tmp[1];
+		S06 = tmp[2];
+		S05 = tmp[3];
+		S04 = tmp[4];
+		S03 = tmp[5];
+		S02 = tmp[6];
+		S01 = tmp[7];
+		S00 = tmp[8];
+		SMIX_2(S00, S01, S02, S03);
+		S04 ^= S00;
+		S10 ^= S00;
+		S18 ^= S00;
+		S27 ^= S00;
+		//ROR(9, 36);
+		tmp[0] = S35;
+		tmp[1] = S34;
+		tmp[2] = S33;
+		tmp[3] = S32;
+		tmp[4] = S31;
+		tmp[5] = S30;
+		tmp[6] = S29;
+		tmp[7] = S28;
+		tmp[8] = S27;
+		S35 = S26;
+		S34 = S25;
+		S33 = S24;
+		S32 = S23;
+		S31 = S22;
+		S30 = S21;
+		S29 = S20;
+		S28 = S19;
+		S27 = S18;
+		S26 = S17;
+		S25 = S16;
+		S24 = S15;
+		S23 = S14;
+		S22 = S13;
+		S21 = S12;
+		S20 = S11;
+		S19 = S10;
+		S18 = S09;
+		S17 = S08;
+		S16 = S07;
+		S15 = S06;
+		S14 = S05;
+		S13 = S04;
+		S12 = S03;
+		S11 = S02;
+		S10 = S01;
+		S09 = S00;
+		S08 = tmp[0];
+		S07 = tmp[1];
+		S06 = tmp[2];
+		S05 = tmp[3];
+		S04 = tmp[4];
+		S03 = tmp[5];
+		S02 = tmp[6];
+		S01 = tmp[7];
+		S00 = tmp[8];
+		SMIX_2(S00, S01, S02, S03);
+		S04 ^= S00;
+		S10 ^= S00;
+		S19 ^= S00;
+		S27 ^= S00;
+		// ROR(9, 36);
+		tmp[0] = S35;
+		tmp[1] = S34;
+		tmp[2] = S33;
+		tmp[3] = S32;
+		tmp[4] = S31;
+		tmp[5] = S30;
+		tmp[6] = S29;
+		tmp[7] = S28;
+		tmp[8] = S27;
+		S35 = S26;
+		S34 = S25;
+		S33 = S24;
+		S32 = S23;
+		S31 = S22;
+		S30 = S21;
+		S29 = S20;
+		S28 = S19;
+		S27 = S18;
+		S26 = S17;
+		S25 = S16;
+		S24 = S15;
+		S23 = S14;
+		S22 = S13;
+		S21 = S12;
+		S20 = S11;
+		S19 = S10;
+		S18 = S09;
+		S17 = S08;
+		S16 = S07;
+		S15 = S06;
+		S14 = S05;
+		S13 = S04;
+		S12 = S03;
+		S11 = S02;
+		S10 = S01;
+		S09 = S00;
+		S08 = tmp[0];
+		S07 = tmp[1];
+		S06 = tmp[2];
+		S05 = tmp[3];
+		S04 = tmp[4];
+		S03 = tmp[5];
+		S02 = tmp[6];
+		S01 = tmp[7];
+		S00 = tmp[8];
+		SMIX_2(S00, S01, S02, S03);
+		S04 ^= S00;
+		S10 ^= S00;
+		S19 ^= S00;
+		S28 ^= S00;
+		// ROR(8, 36);
+		tmp[0] = S35;
+		tmp[1] = S34;
+		tmp[2] = S33;
+		tmp[3] = S32;
+		tmp[4] = S31;
+		tmp[5] = S30;
+		tmp[6] = S29;
+		tmp[7] = S28;
+		S35 = S27;
+		S34 = S26;
+		S33 = S25;
+		S32 = S24;
+		S31 = S23;
+		S30 = S22;
+		S29 = S21;
+		S28 = S20;
+		S27 = S19;
+		S26 = S18;
+		S25 = S17;
+		S24 = S16;
+		S23 = S15;
+		S22 = S14;
+		S21 = S13;
+		S20 = S12;
+		S19 = S11;
+		S18 = S10;
+		S17 = S09;
+		S16 = S08;
+		S15 = S07;
+		S14 = S06;
+		S13 = S05;
+		S12 = S04;
+		S11 = S03;
+		S10 = S02;
+		S09 = S01;
+		S08 = S00;
+		S07 = tmp[0];
+		S06 = tmp[1];
+		S05 = tmp[2];
+		S04 = tmp[3];
+		S03 = tmp[4];
+		S02 = tmp[5];
+		S01 = tmp[6];
+		S00 = tmp[7];
+
+		SMIX_2(S00, S01, S02, S03);
+	}
+	// last round isolated
+	S04 ^= S00;
+	S09 ^= S00;
+	S18 ^= S00;
+	S27 ^= S00;
+	SMIX_2(S27, S28, S29, S30);
+	S31 ^= S27;
+	S01 ^= S27;
+	S09 ^= S27;
+	S18 ^= S27;
+	SMIX_2(S18, S19, S20, S21);
+	S22 ^= S18;
+	S09 ^= S18;
+	// ROR(9, 36);
+	do{
+		sph_u32 c0 = 0;
+		sph_u32 c1 = 0;
+		sph_u32 c2 = 0;
+		sph_u32 c3 = 0;
+		sph_u32 r0 = 0;
+		sph_u32 r1 = 0;
+		sph_u32 r2 = 0;
+		sph_u32 r3 = 0;
+		sph_u32 tmp;
+		tmp = mixtab0[S09 >> 24];
+		c0 ^= tmp;
+		tmp = mixtab1[(S09 >> 16) & 0xFF];
+		c0 ^= tmp;
+		r1 ^= tmp;
+		tmp = mixtab2[(S09 >>  8) & 0xFF];
+		c0 ^= tmp;
+		r2 ^= tmp;
+		tmp = mixtab3[S09 & 0xFF];
+		c0 ^= tmp;
+		r3 ^= tmp;
+		tmp = mixtab0[S10 >> 24];
+		c1 ^= tmp;
+		r0 ^= tmp;
+		tmp = mixtab1[(S10 >> 16) & 0xFF];
+		c1 ^= tmp;
+		tmp = mixtab2[(S10 >>  8) & 0xFF];
+		c1 ^= tmp;
+		r2 ^= tmp;
+		tmp = mixtab3[S10 & 0xFF];
+		c1 ^= tmp;
+		r3 ^= tmp;
+		tmp = mixtab0[S11 >> 24];
+		c2 ^= tmp;
+		r0 ^= tmp;
+		tmp = mixtab1[(S11 >> 16) & 0xFF];
+		c2 ^= tmp;
+		r1 ^= tmp;
+		tmp = mixtab2[(S11 >>  8) & 0xFF];
+		c2 ^= tmp;
+		tmp = mixtab3[S11 & 0xFF];
+		c2 ^= tmp;
+		r3 ^= tmp;
+		tmp = mixtab0[S12 >> 24];
+		c3 ^= tmp;
+		r0 ^= tmp;
+		tmp = mixtab1[(S12 >> 16) & 0xFF];
+		c3 ^= tmp;
+		r1 ^= tmp;
+		tmp = mixtab2[(S12 >>  8) & 0xFF];
+		c3 ^= tmp;
+		r2 ^= tmp;
+		tmp = mixtab3[S12 & 0xFF];
+		c3 ^= tmp;
+		S09 = ((c0 ^ r0) & SPH_C32(0xFF000000))
+			| ((c1 ^ r1) & SPH_C32(0x00FF0000))
+			| ((c2 ^ r2) & SPH_C32(0x0000FF00))
+			| ((c3 ^ r3) & SPH_C32(0x000000FF));
+	}
+	while( 0 );
+	S13 ^= S09;
+	return metis4_u32ToBE(S13);
+}
+
 #ifdef __cplusplus
 }
 #endif

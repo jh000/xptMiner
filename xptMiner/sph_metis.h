@@ -74,6 +74,13 @@ void sph_metis512_close(void *cc, void *dst);
 void sph_metis512_addbits_and_close(
 	void *cc, unsigned ub, unsigned n, void *dst);
 
+// optimized routines
+unsigned int metis4_core_opt(const void *data);
+void metis4_core_opt_interleaved(unsigned int* data1, unsigned int* data2, unsigned int* v1, unsigned int* v2);
+
+void metis4_core_opt_p1(unsigned int* data, unsigned int* pOut);
+unsigned int metis4_core_opt_p2(unsigned int* pIn);
+
 #ifdef __cplusplus
 }
 #endif	

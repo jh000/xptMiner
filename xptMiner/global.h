@@ -7,6 +7,7 @@
 
 #include"jhlib.h" // slim version of jh library
 
+#include"openCL.h"
 
 // connection info for xpt
 typedef struct  
@@ -32,6 +33,10 @@ typedef struct
 {
 	generalRequestTarget_t requestTarget;
 	uint32 protoshareMemoryMode;
+	// GPU
+	bool useGPU; // enable OpenCL
+	// GPU (MaxCoin specific)
+
 }minerSettings_t;
 
 extern minerSettings_t minerSettings;
@@ -115,16 +120,37 @@ typedef struct
 	uint8	targetShare[32];
 }minerMetiscoinBlock_t; // identical to scryptBlock
 
+typedef struct  
+{
+	// block data (order and memory layout is important)
+	uint32	version;
+	uint8	prevBlockHash[32];
+	uint8	merkleRoot[32];
+	uint32	nTime;
+	uint32	nBits;
+	uint32	nonce;
+	// remaining data
+	uint32	uniqueMerkleSeed;
+	uint32	height;
+	uint8	merkleRootOriginal[32]; // used to identify work
+	uint8	target[32];
+	uint8	targetShare[32];
+}minerMaxcoinBlock_t; // identical to scryptBlock
+
 #include"scrypt.h"
 #include"algorithm.h"
+#include"openCL.h"
 
 void xptMiner_submitShare(minerProtosharesBlock_t* block);
 void xptMiner_submitShare(minerScryptBlock_t* block);
 void xptMiner_submitShare(minerPrimecoinBlock_t* block);
 void xptMiner_submitShare(minerMetiscoinBlock_t* block);
+void xptMiner_submitShare(minerMaxcoinBlock_t* block);
 
 // stats
 extern volatile uint32 totalCollisionCount;
 extern volatile uint32 totalShareCount;
+extern volatile uint32 totalRejectedShareCount;
 
 extern volatile uint32 monitorCurrentBlockHeight;
+extern volatile uint32 monitorCurrentBlockTime;

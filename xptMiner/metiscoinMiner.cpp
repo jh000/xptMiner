@@ -1,28 +1,41 @@
 #include"global.h"
+#include"aes_helper.h"
 
-#define GROUPED_HASHES	(32)
+#define GROUPED_HASHES	(512)
+
+/*
+ * Called once when Metiscoin was detected as the active algorithm for the current worker
+ */
+void metiscoin_init()
+{
+	printf("Using Metiscoin algorithm\n");
+}
+
 
 void metiscoin_process(minerMetiscoinBlock_t* block)
 {
 	sph_keccak512_context	 ctx_keccak;
-	sph_shavite512_context	 ctx_shavite;
-	sph_metis512_context	 ctx_metis;
-	static unsigned char pblank[1];
+	static unsigned char	 pblank[1];
 	block->nonce = 0;
-
 	uint32 target = *(uint32*)(block->targetShare+28);
-	uint64 hash0[8*GROUPED_HASHES];
-	uint64 hash2[8];
-
+	__declspec(align(32)) unsigned int metisPartData[36*GROUPED_HASHES];
+	__declspec(align(32)) uint64 hash0[8*GROUPED_HASHES];
 	// since only the nonce changes we can calculate the first keccak round in advance
 	unsigned long long keccakPre[25];
 	sph_keccak512_init(&ctx_keccak);
 	keccak_core_prepare(&ctx_keccak, block, keccakPre);
-
 	for(uint32 n=0; n<0x10000; n++)
 	{
 		if( block->height != monitorCurrentBlockHeight )
 			break;
+		if( (block->nTime+60) < monitorCurrentBlockTime )
+		{
+			// need to update time
+			block->nTime = monitorCurrentBlockTime;
+			// update initial keccak round
+			sph_keccak512_init(&ctx_keccak);
+			keccak_core_prepare(&ctx_keccak, block, keccakPre);
+		}
 		for(uint32 f=0; f<0x8000; f += GROUPED_HASHES )
 		{
 			// todo: Generate multiple hashes for multiple nonces at once
@@ -34,17 +47,54 @@ void metiscoin_process(minerMetiscoinBlock_t* block)
 			}
 			for(uint32 i=0; i<GROUPED_HASHES; i++)
 			{
-				sph_shavite512_init(&ctx_shavite);
-				sph_shavite512(&ctx_shavite, hash0+i*8, 64);
-				sph_shavite512_close(&ctx_shavite, hash0+i*8);
+				shavite_big_core_opt(hash0+i*8, hash0+i*8);
 			}
 			block->nonce = n*0x10000+f;
+			//for(uint32 i=0; i<GROUPED_HASHES; i++)
+			//{
+			//	unsigned v1, v2;
+			//	if( metis4_core_opt(hash0+i*8) <= target )
+			//	{
+			//		totalShareCount++;
+			//		//block->nonce = rawBlock.nonce;
+			//		xptMiner_submitShare(block);
+			//	}
+			//	block->nonce++;
+			//}
+			//for(uint32 i=0; i<GROUPED_HASHES; i += 2)
+			//{
+			//	unsigned int v1, v2;
+			//	//unsigned int v3, v4;
+			//	metis4_core_opt_interleaved((unsigned int *)(hash0+i*8), (unsigned int *)(hash0+i*8+8), &v1, &v2);
+			//	//metis4_core_opt_interleaved((unsigned int *)(hash0+i*8+8), (unsigned int *)(hash0+i*8+16), &v3, &v4);
+			//	if( v1 <= target )
+			//	{
+			//		printf("[DEBUG] Share A\n");
+			//		totalShareCount++;
+			//		//block->nonce = rawBlock.nonce;
+			//		xptMiner_submitShare(block);
+			//	}
+			//	block->nonce++;
+			//	if( v2 <= target )
+			//	{
+			//		printf("[DEBUG] Share B\n");
+			//		totalShareCount++;
+			//		//block->nonce = rawBlock.nonce;
+			//		xptMiner_submitShare(block);
+			//	}
+			//	block->nonce++;
+			//}
 			for(uint32 i=0; i<GROUPED_HASHES; i++)
 			{
-				sph_metis512_init(&ctx_metis);
-				sph_metis512(&ctx_metis, hash0+i*8, 64);
-				sph_metis512_close(&ctx_metis, hash2);
-				if( *(uint32*)((uint8*)hash2+28) <= target )
+				metis4_core_opt_p1((unsigned int *)(hash0+i*8), metisPartData+i*36);
+			}
+			for(uint32 i=0; i<GROUPED_HASHES; i++)
+			{
+				//unsigned int v1, v2;
+				//unsigned int v3, v4;
+				//metis4_core_opt_interleaved((unsigned int *)(hash0+i*8), (unsigned int *)(hash0+i*8+8), &v1, &v2);
+				//metis4_core_opt_interleaved((unsigned int *)(hash0+i*8+8), (unsigned int *)(hash0+i*8+16), &v3, &v4);
+				if( metis4_core_opt_p2(metisPartData+i*36) <= target )
 				{
 					totalShareCount++;
 					//block->nonce = rawBlock.nonce;
@@ -52,6 +102,8 @@ void metiscoin_process(minerMetiscoinBlock_t* block)
 				}
 				block->nonce++;
 			}
+			//void metis4_core_opt_p1(unsigned int* data, unsigned int* pOut);
+			//unsigned int metis4_core_opt_p2(unsigned int* pIn);
 		}
 		totalCollisionCount += 1; // count in steps of 0x8000
 	}
