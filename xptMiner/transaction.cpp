@@ -27,7 +27,7 @@ void bitclient_addVarIntFromStream(stream_t* msgStream, uint64 varInt)
 	}
 }
 
-void bitclient_generateTxHash(uint32 userExtraNonceLength, uint8* userExtraNonce, uint32 coinBase1Length, uint8* coinBase1, uint32 coinBase2Length, uint8* coinBase2, uint8* txHash)
+void bitclient_generateTxHash(uint32 userExtraNonceLength, uint8* userExtraNonce, uint32 coinBase1Length, uint8* coinBase1, uint32 coinBase2Length, uint8* coinBase2, uint8* txHash, uint32 mode)
 {
 	stream_t* streamTXData = streamEx_fromDynamicMemoryRange(1024*32);
 	stream_writeData(streamTXData, coinBase1, coinBase1Length);
@@ -38,17 +38,26 @@ void bitclient_generateTxHash(uint32 userExtraNonceLength, uint8* userExtraNonce
 	// special case, we can use the hash of the transaction
 	uint8 hashOut[32];
 	sha256_ctx sctx;
-	sha256_init(&sctx);
-	sha256_update(&sctx, transactionData, transactionDataLength);
-	sha256_final(&sctx, hashOut);
-	sha256_init(&sctx);
-	sha256_update(&sctx, hashOut, 32);
-	sha256_final(&sctx, txHash);
+	if( mode == TX_MODE_DOUBLE_SHA256 )
+	{
+		sha256_init(&sctx);
+		sha256_update(&sctx, transactionData, transactionDataLength);
+		sha256_final(&sctx, hashOut);
+		sha256_init(&sctx);
+		sha256_update(&sctx, hashOut, 32);
+		sha256_final(&sctx, txHash);
+	}
+	else
+	{
+		sha256_init(&sctx);
+		sha256_update(&sctx, transactionData, transactionDataLength);
+		sha256_final(&sctx, txHash);
+	}
 	free(transactionData);
 	stream_destroy(streamTXData);
 }
 
-void bitclient_calculateMerkleRoot(uint8* txHashes, uint32 numberOfTxHashes, uint8* merkleRoot)
+void bitclient_calculateMerkleRoot(uint8* txHashes, uint32 numberOfTxHashes, uint8* merkleRoot, uint32 mode)
 {
 	if(numberOfTxHashes <= 0 )
 	{
@@ -103,13 +112,22 @@ void bitclient_calculateMerkleRoot(uint8* txHashes, uint32 numberOfTxHashes, uin
 			{
 				uint8 hashOut[32];
 				sha256_ctx sha256_ctx;
-				sha256_init(&sha256_ctx);
-				sha256_update(&sha256_ctx, hashData+(hashReadIndex*32), 32*2);
+				if( mode == TX_MODE_DOUBLE_SHA256 )
+				{
+					sha256_init(&sha256_ctx);
+					sha256_update(&sha256_ctx, hashData+(hashReadIndex*32), 32*2);
+					sha256_final(&sha256_ctx, hashOut);
+					sha256_init(&sha256_ctx);
+					sha256_update(&sha256_ctx, hashOut, 32);
+					sha256_final(&sha256_ctx, hashData+(hashCount*32));
+				}
+				else
+				{
+					sha256_init(&sha256_ctx);
+					sha256_update(&sha256_ctx, hashData+(hashReadIndex*32), 32*2);
+					sha256_final(&sha256_ctx, hashData+(hashCount*32));
+				}
 				hashReadIndex += 2;
-				sha256_final(&sha256_ctx, hashOut);
-				sha256_init(&sha256_ctx);
-				sha256_update(&sha256_ctx, hashOut, 32);
-				sha256_final(&sha256_ctx, hashData+(hashCount*32));
 				hashCount++;
 				layerSize[f+1]++;
 			}

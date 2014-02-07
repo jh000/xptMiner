@@ -3,7 +3,7 @@
 #define MAX_TRANSACTIONS	(4096)
 
 // miner version string (for pool statistic)
-char* minerVersionString = "xptMiner 1.4";
+char* minerVersionString = "xptMiner 1.4b";
 
 minerSettings_t minerSettings = {0};
 
@@ -250,8 +250,8 @@ int xptMiner_minerThread(int threadIndex)
 				minerProtosharesBlock.uniqueMerkleSeed = uniqueMerkleSeedGenerator;
 				uniqueMerkleSeedGenerator++;
 				// generate merkle root transaction
-				bitclient_generateTxHash(sizeof(uint32), (uint8*)&minerProtosharesBlock.uniqueMerkleSeed, workDataSource.coinBase1Size, workDataSource.coinBase1, workDataSource.coinBase2Size, workDataSource.coinBase2, workDataSource.txHash);
-				bitclient_calculateMerkleRoot(workDataSource.txHash, workDataSource.txHashCount+1, minerProtosharesBlock.merkleRoot);
+				bitclient_generateTxHash(sizeof(uint32), (uint8*)&minerProtosharesBlock.uniqueMerkleSeed, workDataSource.coinBase1Size, workDataSource.coinBase1, workDataSource.coinBase2Size, workDataSource.coinBase2, workDataSource.txHash, TX_MODE_DOUBLE_SHA256);
+				bitclient_calculateMerkleRoot(workDataSource.txHash, workDataSource.txHashCount+1, minerProtosharesBlock.merkleRoot, TX_MODE_DOUBLE_SHA256);
 				hasValidWork = true;
 				break;
 			case ALGORITHM_SCRYPT:
@@ -268,8 +268,8 @@ int xptMiner_minerThread(int threadIndex)
 				minerScryptBlock.uniqueMerkleSeed = uniqueMerkleSeedGenerator;
 				uniqueMerkleSeedGenerator++;
 				// generate merkle root transaction
-				bitclient_generateTxHash(sizeof(uint32), (uint8*)&minerScryptBlock.uniqueMerkleSeed, workDataSource.coinBase1Size, workDataSource.coinBase1, workDataSource.coinBase2Size, workDataSource.coinBase2, workDataSource.txHash);
-				bitclient_calculateMerkleRoot(workDataSource.txHash, workDataSource.txHashCount+1, minerScryptBlock.merkleRoot);
+				bitclient_generateTxHash(sizeof(uint32), (uint8*)&minerScryptBlock.uniqueMerkleSeed, workDataSource.coinBase1Size, workDataSource.coinBase1, workDataSource.coinBase2Size, workDataSource.coinBase2, workDataSource.txHash, TX_MODE_DOUBLE_SHA256);
+				bitclient_calculateMerkleRoot(workDataSource.txHash, workDataSource.txHashCount+1, minerScryptBlock.merkleRoot, TX_MODE_DOUBLE_SHA256);
 				hasValidWork = true;
 				break;
 			case ALGORITHM_METISCOIN:
@@ -286,8 +286,8 @@ int xptMiner_minerThread(int threadIndex)
 				minerMetiscoinBlock.uniqueMerkleSeed = uniqueMerkleSeedGenerator;
 				uniqueMerkleSeedGenerator++;
 				// generate merkle root transaction
-				bitclient_generateTxHash(sizeof(uint32), (uint8*)&minerMetiscoinBlock.uniqueMerkleSeed, workDataSource.coinBase1Size, workDataSource.coinBase1, workDataSource.coinBase2Size, workDataSource.coinBase2, workDataSource.txHash);
-				bitclient_calculateMerkleRoot(workDataSource.txHash, workDataSource.txHashCount+1, minerMetiscoinBlock.merkleRoot);
+				bitclient_generateTxHash(sizeof(uint32), (uint8*)&minerMetiscoinBlock.uniqueMerkleSeed, workDataSource.coinBase1Size, workDataSource.coinBase1, workDataSource.coinBase2Size, workDataSource.coinBase2, workDataSource.txHash, TX_MODE_DOUBLE_SHA256);
+				bitclient_calculateMerkleRoot(workDataSource.txHash, workDataSource.txHashCount+1, minerMetiscoinBlock.merkleRoot, TX_MODE_DOUBLE_SHA256);
 				hasValidWork = true;
 				break;
 			case ALGORITHM_MAXCOIN:
@@ -304,8 +304,8 @@ int xptMiner_minerThread(int threadIndex)
 				minerMaxcoinBlock.uniqueMerkleSeed = uniqueMerkleSeedGenerator;
 				uniqueMerkleSeedGenerator++;
 				// generate merkle root transaction
-				bitclient_generateTxHash(sizeof(uint32), (uint8*)&minerMaxcoinBlock.uniqueMerkleSeed, workDataSource.coinBase1Size, workDataSource.coinBase1, workDataSource.coinBase2Size, workDataSource.coinBase2, workDataSource.txHash);
-				bitclient_calculateMerkleRoot(workDataSource.txHash, workDataSource.txHashCount+1, minerMaxcoinBlock.merkleRoot);
+				bitclient_generateTxHash(sizeof(uint32), (uint8*)&minerMaxcoinBlock.uniqueMerkleSeed, workDataSource.coinBase1Size, workDataSource.coinBase1, workDataSource.coinBase2Size, workDataSource.coinBase2, workDataSource.txHash, TX_MODE_SINGLE_SHA256);
+				bitclient_calculateMerkleRoot(workDataSource.txHash, workDataSource.txHashCount+1, minerMaxcoinBlock.merkleRoot, TX_MODE_SINGLE_SHA256);
 				hasValidWork = true;
 				break;
 			case ALGORITHM_PRIME:
@@ -322,8 +322,8 @@ int xptMiner_minerThread(int threadIndex)
 				minerPrimecoinBlock.uniqueMerkleSeed = uniqueMerkleSeedGenerator;
 				uniqueMerkleSeedGenerator++;
 				// generate merkle root transaction
-				bitclient_generateTxHash(sizeof(uint32), (uint8*)&minerPrimecoinBlock.uniqueMerkleSeed, workDataSource.coinBase1Size, workDataSource.coinBase1, workDataSource.coinBase2Size, workDataSource.coinBase2, workDataSource.txHash);
-				bitclient_calculateMerkleRoot(workDataSource.txHash, workDataSource.txHashCount+1, minerPrimecoinBlock.merkleRoot);
+				bitclient_generateTxHash(sizeof(uint32), (uint8*)&minerPrimecoinBlock.uniqueMerkleSeed, workDataSource.coinBase1Size, workDataSource.coinBase1, workDataSource.coinBase2Size, workDataSource.coinBase2, workDataSource.txHash, TX_MODE_DOUBLE_SHA256);
+				bitclient_calculateMerkleRoot(workDataSource.txHash, workDataSource.txHashCount+1, minerPrimecoinBlock.merkleRoot, TX_MODE_DOUBLE_SHA256);
 				hasValidWork = true;
 				break;
 			}
@@ -737,7 +737,7 @@ int main(int argc, char** argv)
 	minerSettings.protoshareMemoryMode = commandlineInput.ptsMemoryMode;
 	minerSettings.useGPU = commandlineInput.useGPU;
 	printf("\xC9\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xBB\n");
-	printf("\xBA  xptMiner (v1.4)                                 \xBA\n");
+	printf("\xBA  xptMiner (v1.4b)                                \xBA\n");
 	printf("\xBA  author: jh00                                    \xBA\n");
 	printf("\xBA  http://ypool.net                                \xBA\n");
 	printf("\xC8\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xBC\n");

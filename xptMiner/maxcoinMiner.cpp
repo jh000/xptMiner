@@ -389,14 +389,11 @@ inline uint32 maxcoin_swapEndianU32(uint32 v)
 void xptMiner_submitShare_test(minerMaxcoinBlock_t* block)
 {
 	// debug method to check if share is 100% valid without server access
-	uint32 blockDataBE[80/4];
 	uint32* blockInputData = (uint32*)block;
-	for(sint32 i=0; i<20; i++)
-		blockDataBE[i] = maxcoin_swapEndianU32(blockInputData[i]);
 	uint64 hash0[4];
 	sph_keccak256_context	 ctx_keccak;
 	sph_keccak256_init(&ctx_keccak);	
-	sph_keccak256(&ctx_keccak, blockDataBE, 80);
+	sph_keccak256(&ctx_keccak, blockInputData, 80);
 	sph_keccak256_close(&ctx_keccak, hash0);
 	if( (hash0[3]>>32) <= *(uint32*)(block->targetShare+32-4) )
 	{
@@ -420,7 +417,7 @@ void maxcoin_processGPU(minerMaxcoinBlock_t* block)
 	uint32* blockInputData = (uint32*)block;
 	uint32* blockDataBE = (uint32*)maxcoinGPU.buffer_blockInputData;
 	for(sint32 i=0; i<20-1; i++)
-		blockDataBE[i] = maxcoin_swapEndianU32(blockInputData[i]);
+		blockDataBE[i] = blockInputData[i];//maxcoin_swapEndianU32(blockInputData[i]);
 	blockDataBE[19] = 0; // set nonce to zero	
 	blockDataBE[20] = *(uint32*)(block->targetShare+24);
 	blockDataBE[21] = *(uint32*)(block->targetShare+28);
@@ -471,11 +468,11 @@ void maxcoin_process(minerMaxcoinBlock_t* block)
 
 	__declspec(align(32)) uint64 hash0[4];
 	// endian swap block data (input data needs to be big endian)
-	uint32 blockDataBE[80/4];
+	//uint32 blockDataBE[80/4];
 	uint32* blockInputData = (uint32*)block;
-	for(sint32 i=0; i<20-1; i++)
-		blockDataBE[i] = maxcoin_swapEndianU32(blockInputData[i]);
-	blockDataBE[19] = 0; // set nonce to zero	
+	//for(sint32 i=0; i<20-1; i++)
+	//	blockDataBE[i] = maxcoin_swapEndianU32(blockInputData[i]);
+	//blockDataBE[19] = 0; // set nonce to zero	
 	uint64 targetU64 = *(uint64*)(block->targetShare+24);
 	//keccak_core_prepare(&ctx_keccak, block, keccakPre);
 	for(uint32 n=0; n<0x10000; n++)
@@ -486,17 +483,17 @@ void maxcoin_process(minerMaxcoinBlock_t* block)
 		{
 			// need to update time
 			block->nTime = monitorCurrentBlockTime;
-			blockDataBE[68/4] = maxcoin_swapEndianU32(blockInputData[68/4]);
+			//blockInputData[68/4] = blockInputData[68/4];
 		}
 		for(uint32 f=0; f<0x8000; f++ )
 		{	
-			if( keccak256_maxcoin_opt_v((unsigned long long*)blockDataBE) <= targetU64 )
+			if( keccak256_maxcoin_opt_v((unsigned long long*)blockInputData) <= targetU64 )
 			{
 				totalShareCount++;
-				block->nonce = maxcoin_swapEndianU32(blockDataBE[19]);
+				block->nonce = blockInputData[19];
 				xptMiner_submitShare(block);
 			}
-			blockDataBE[19]++;
+			blockInputData[19]++;
 			//void metis4_core_opt_p1(unsigned int* data, unsigned int* pOut);
 			//unsigned int metis4_core_opt_p2(unsigned int* pIn);
 		}
