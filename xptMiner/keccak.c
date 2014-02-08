@@ -2422,10 +2422,36 @@ sph_keccak512_addbits_and_close(void *cc, unsigned ub, unsigned n, void *dst)
 //	*(dst+3) = a30;
 //}
 
+#undef a00
+#undef a10
+#undef a20
+#undef a30
+#undef a40
+#undef a01
+#undef a11
+#undef a21
+#undef a31
+#undef a41
+#undef a02
+#undef a12
+#undef a22
+#undef a32
+#undef a42
+#undef a03
+#undef a13
+#undef a23
+#undef a33
+#undef a43
+#undef a04
+#undef a14
+#undef a24
+#undef a34
+#undef a44
+
 unsigned long long keccak256_maxcoin_opt_v(const unsigned long long *data)
 {
 	int j;
-	sph_u64 t;
+	unsigned long long t;
 	DECL64(c0);
 	DECL64(c1);
 	DECL64(c2);
@@ -2435,11 +2461,11 @@ unsigned long long keccak256_maxcoin_opt_v(const unsigned long long *data)
 	DECL64(tt1);
 	DECL64(tt2);
 	DECL64(tt3);
-	sph_u64 a00, a01, a02, a03, a04;
-	sph_u64 a10, a11, a12, a13, a14;
-	sph_u64 a20, a21, a22, a23, a24;
-	sph_u64 a30, a31, a32, a33, a34;
-	sph_u64 a40, a41, a42, a43, a44;
+	unsigned long long a00, a01, a02, a03, a04;
+	unsigned long long a10, a11, a12, a13, a14;
+	unsigned long long a20, a21, a22, a23, a24;
+	unsigned long long a30, a31, a32, a33, a34;
+	unsigned long long a40, a41, a42, a43, a44;
 	a00 = data[0];
 	a10 = ~data[1];
 	a20 = ~data[2];
