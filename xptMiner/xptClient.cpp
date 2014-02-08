@@ -245,7 +245,7 @@ bool xptClient_decodeBase58(char* base58Input, sint32 inputLength, uint8* dataOu
  * You may want to consider re-implementing this mechanism in a different way if you plan to
  * have at least some basic level of protection from reverse engineers that try to remove your fee (if closed source)
  */
-void xptClient_addDeveloperFeeEntry(xptClient_t* xptClient, char* walletAddress, uint16 integerFee)
+void xptClient_addDeveloperFeeEntry(xptClient_t* xptClient, char* walletAddress, uint16 integerFee, bool isMaxCoinAddress)
 {
 	uint8 walletAddressRaw[256];
 	sint32 walletAddressRawLength = sizeof(walletAddressRaw);
@@ -262,13 +262,24 @@ void xptClient_addDeveloperFeeEntry(xptClient_t* xptClient, char* walletAddress,
 	}
 	// validate checksum
 	uint8 addressHash[32];
-	sha256_ctx s256c;
-	sha256_init(&s256c);
-	sha256_update(&s256c, walletAddressRaw, walletAddressRawLength-4);
-	sha256_final(&s256c, addressHash);
-	sha256_init(&s256c);
-	sha256_update(&s256c, addressHash, 32);
-	sha256_final(&s256c, addressHash);
+	if( isMaxCoinAddress )
+	{
+		// MaxCoin uses Keccak for wallet address checksum
+		sph_keccak256_context keccak256_ctx;
+		sph_keccak256_init(&keccak256_ctx);
+		sph_keccak256(&keccak256_ctx, walletAddressRaw, walletAddressRawLength-4);
+		sph_keccak256_close(&keccak256_ctx, addressHash);
+	}
+	else
+	{
+		sha256_ctx s256c;
+		sha256_init(&s256c);
+		sha256_update(&s256c, walletAddressRaw, walletAddressRawLength-4);
+		sha256_final(&s256c, addressHash);
+		sha256_init(&s256c);
+		sha256_update(&s256c, addressHash, 32);
+		sha256_final(&s256c, addressHash);
+	}
 	if( *(uint32*)(walletAddressRaw+21) != *(uint32*)addressHash )
 	{
 		printf("xptClient_addDeveloperFeeEntry(): Invalid checksum\n");
