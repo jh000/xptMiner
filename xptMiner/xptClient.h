@@ -19,6 +19,8 @@ typedef struct
 	// protoshare specific
 	uint32 nBirthdayA;
 	uint32 nBirthdayB;
+	// riecoin specific
+	uint8  riecoin_nOffset[32];
 	// gbt stuff
 	uint8 merkleRootOriginal[32];
 	uint32 userExtraNonceLength;

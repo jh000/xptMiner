@@ -61,6 +61,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
+				AdditionalDependencies="mpir\x86\mpir.lib"
 				GenerateDebugInformation="true"
 				TargetMachine="1"
 			/>
@@ -130,6 +131,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
+				AdditionalDependencies="mpir\x64\mpir.lib"
 				GenerateDebugInformation="true"
 				TargetMachine="17"
 			/>
@@ -200,6 +202,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
+				AdditionalDependencies="mpir\x86\mpir.lib"
 				GenerateDebugInformation="true"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
@@ -273,6 +276,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
+				AdditionalDependencies="mpir\x64\mpir.lib"
 				GenerateDebugInformation="true"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
@@ -381,6 +385,14 @@
 					>
 					<File
 						RelativePath=".\maxcoinMiner.cpp"
+						>
+					</File>
+				</Filter>
+				<Filter
+					Name="riecoin"
+					>
+					<File
+						RelativePath=".\riecoinMiner.cpp"
 						>
 					</File>
 				</Filter>

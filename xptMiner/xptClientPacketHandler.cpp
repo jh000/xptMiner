@@ -58,8 +58,13 @@ bool xptClient_processPacket_blockData1(xptClient_t* xptClient)
 	// New in xpt version 6 - Targets are send in compact format (4 bytes instead of 32)
 	uint32 targetCompact = xptPacketbuffer_readU32(xptClient->recvBuffer, &recvError);
 	uint32 targetShareCompact = xptPacketbuffer_readU32(xptClient->recvBuffer, &recvError);
-	xptClient_getDifficultyTargetFromCompact(targetCompact, (uint32*)xptClient->blockWorkInfo.target);
-	xptClient_getDifficultyTargetFromCompact(targetShareCompact, (uint32*)xptClient->blockWorkInfo.targetShare);
+	xptClient->blockWorkInfo.targetCompact = targetCompact;
+	xptClient->blockWorkInfo.targetShareCompact = targetShareCompact;
+	if( xptClient->algorithm != ALGORITHM_RIECOIN )
+	{
+		xptClient_getDifficultyTargetFromCompact(targetCompact, (uint32*)xptClient->blockWorkInfo.target);
+		xptClient_getDifficultyTargetFromCompact(targetShareCompact, (uint32*)xptClient->blockWorkInfo.targetShare);
+	}
 	xptClient->blockWorkInfo.nTime = xptPacketbuffer_readU32(xptClient->recvBuffer, &recvError);				// nTimestamp
 	xptPacketbuffer_readData(xptClient->recvBuffer, xptClient->blockWorkInfo.prevBlockHash, 32, &recvError);	// prevBlockHash
 	xptPacketbuffer_readData(xptClient->recvBuffer, xptClient->blockWorkInfo.merkleRoot, 32, &recvError);		// merkleroot

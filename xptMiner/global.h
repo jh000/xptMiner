@@ -4,6 +4,7 @@
 #include<stdio.h>
 #include<time.h>
 #include<stdlib.h>
+#include"mpir/mpir.h"
 
 #include"jhlib.h" // slim version of jh library
 
@@ -137,6 +138,27 @@ typedef struct
 	uint8	targetShare[32];
 }minerMaxcoinBlock_t; // identical to scryptBlock
 
+
+typedef struct  
+{
+	// block data (order and memory layout is important)
+	uint32	version;
+	uint8	prevBlockHash[32];
+	uint8	merkleRoot[32];
+	uint32	nBits; // Riecoin has order of nBits and nTime exchanged
+	uint64	nTime; // Riecoin has 64bit timestamps
+	uint8	nOffset[32];
+	// remaining data
+	uint32	uniqueMerkleSeed;
+	uint32	height;
+	uint8	merkleRootOriginal[32]; // used to identify work
+	// uint8	target[32];
+	// uint8	targetShare[32];
+	// compact target
+	uint32  targetCompact;
+	uint32  shareTargetCompact;
+}minerRiecoinBlock_t;
+
 #include"scrypt.h"
 #include"algorithm.h"
 #include"openCL.h"
@@ -146,11 +168,16 @@ void xptMiner_submitShare(minerScryptBlock_t* block);
 void xptMiner_submitShare(minerPrimecoinBlock_t* block);
 void xptMiner_submitShare(minerMetiscoinBlock_t* block);
 void xptMiner_submitShare(minerMaxcoinBlock_t* block);
+void xptMiner_submitShare(minerRiecoinBlock_t* block, uint8* nOffset);
 
 // stats
 extern volatile uint32 totalCollisionCount;
 extern volatile uint32 totalShareCount;
 extern volatile uint32 totalRejectedShareCount;
+extern volatile uint32 total2ChainCount;
+extern volatile uint32 total3ChainCount;
+extern volatile uint32 total4ChainCount;
+
 
 extern volatile uint32 monitorCurrentBlockHeight;
 extern volatile uint32 monitorCurrentBlockTime;

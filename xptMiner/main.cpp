@@ -3,7 +3,7 @@
 #define MAX_TRANSACTIONS	(4096)
 
 // miner version string (for pool statistic)
-char* minerVersionString = "xptMiner 1.5";
+char* minerVersionString = "xptMiner 1.6";
 
 minerSettings_t minerSettings = {0};
 
@@ -16,6 +16,9 @@ volatile uint32 monitorCurrentBlockTime; // keeps track of current block time, u
 volatile uint32 totalCollisionCount = 0;
 volatile uint32 totalShareCount = 0;
 volatile uint32 totalRejectedShareCount = 0;
+volatile uint32 total2ChainCount = 0;
+volatile uint32 total3ChainCount = 0;
+volatile uint32 total4ChainCount = 0;
 
 
 struct  
@@ -31,6 +34,8 @@ struct
 	uint8	prevBlockHash[32];
 	uint8	target[32];
 	uint8	targetShare[32];
+	uint32  targetCompact;
+	uint32  shareTargetCompact;
 	// extra nonce info
 	uint8	coinBase1[1024];
 	uint8	coinBase2[1024];
@@ -216,6 +221,40 @@ void xptMiner_submitShare(minerMaxcoinBlock_t* block)
 	LeaveCriticalSection(&cs_xptClient);
 }
 
+/*
+ * Submit Riecoin share
+ */
+void xptMiner_submitShare(minerRiecoinBlock_t* block, uint8* nOffset)
+{
+	uint32 passedSeconds = (uint32)time(NULL) - miningStartTime;
+	printf("[%02d:%02d:%02d] Share found! (Blockheight: %d)\n", (passedSeconds/3600)%60, (passedSeconds/60)%60, (passedSeconds)%60, block->height);
+	EnterCriticalSection(&cs_xptClient);
+	if( xptClient == NULL || xptClient_isDisconnected(xptClient, NULL) == true )
+	{
+		printf("Share submission failed - No connection to server\n");
+		LeaveCriticalSection(&cs_xptClient);
+		return;
+	}
+	// submit block
+	xptShareToSubmit_t* xptShare = (xptShareToSubmit_t*)malloc(sizeof(xptShareToSubmit_t));
+	memset(xptShare, 0x00, sizeof(xptShareToSubmit_t));
+	xptShare->algorithm = ALGORITHM_RIECOIN;
+	xptShare->version = block->version;
+	xptShare->nTime = block->nTime;
+	xptShare->nonce = 0;
+	xptShare->nBits = block->nBits;
+	memcpy(xptShare->prevBlockHash, block->prevBlockHash, 32);
+	memcpy(xptShare->merkleRoot, block->merkleRoot, 32);
+	memcpy(xptShare->merkleRootOriginal, block->merkleRootOriginal, 32);
+	sint32 userExtraNonceLength = sizeof(uint32);
+	uint8* userExtraNonceData = (uint8*)&block->uniqueMerkleSeed;
+	xptShare->userExtraNonceLength = userExtraNonceLength;
+	memcpy(xptShare->userExtraNonceData, userExtraNonceData, userExtraNonceLength);
+	memcpy(xptShare->riecoin_nOffset, nOffset, 32);
+	xptClient_foundShare(xptClient, xptShare);
+	LeaveCriticalSection(&cs_xptClient);
+}
+
 int xptMiner_minerThread(int threadIndex)
 {
 	// local work data
@@ -226,6 +265,7 @@ int xptMiner_minerThread(int threadIndex)
 		minerMetiscoinBlock_t minerMetiscoinBlock;
 		minerPrimecoinBlock_t minerPrimecoinBlock; 
 		minerMaxcoinBlock_t minerMaxcoinBlock; 
+		minerRiecoinBlock_t minerRiecoinBlock; 
 	};
 	while( true )
 	{
@@ -291,7 +331,7 @@ int xptMiner_minerThread(int threadIndex)
 				hasValidWork = true;
 				break;
 			case ALGORITHM_MAXCOIN:
-				// get maxcoin work data
+				// get riecoin work data
 				memset(&minerMaxcoinBlock, 0x00, sizeof(minerMaxcoinBlock));
 				minerMaxcoinBlock.version = workDataSource.version;
 				minerMaxcoinBlock.nTime = (uint32)time(NULL) + workDataSource.timeBias;
@@ -324,6 +364,25 @@ int xptMiner_minerThread(int threadIndex)
 				// generate merkle root transaction
 				bitclient_generateTxHash(sizeof(uint32), (uint8*)&minerPrimecoinBlock.uniqueMerkleSeed, workDataSource.coinBase1Size, workDataSource.coinBase1, workDataSource.coinBase2Size, workDataSource.coinBase2, workDataSource.txHash, TX_MODE_DOUBLE_SHA256);
 				bitclient_calculateMerkleRoot(workDataSource.txHash, workDataSource.txHashCount+1, minerPrimecoinBlock.merkleRoot, TX_MODE_DOUBLE_SHA256);
+				hasValidWork = true;
+				break;
+			case ALGORITHM_RIECOIN:
+				// get maxcoin work data
+				memset(&minerRiecoinBlock, 0x00, sizeof(minerRiecoinBlock));
+				minerRiecoinBlock.version = workDataSource.version;
+				minerRiecoinBlock.nTime = (uint64)time(NULL) + (uint64)(sint64)(sint32)workDataSource.timeBias; // Riecoin uses 64bit timestamp
+				minerRiecoinBlock.nBits = workDataSource.nBits;
+				minerRiecoinBlock.targetCompact = workDataSource.targetCompact;
+				minerRiecoinBlock.shareTargetCompact = workDataSource.shareTargetCompact;
+				//minerRiecoinBlock.nonce = 0; // nonce was replaced by nOffset byte[32]
+				minerRiecoinBlock.height = workDataSource.height;
+				memcpy(minerRiecoinBlock.merkleRootOriginal, workDataSource.merkleRootOriginal, 32);
+				memcpy(minerRiecoinBlock.prevBlockHash, workDataSource.prevBlockHash, 32);
+				minerRiecoinBlock.uniqueMerkleSeed = uniqueMerkleSeedGenerator;
+				uniqueMerkleSeedGenerator++;
+				// generate merkle root transaction
+				bitclient_generateTxHash(sizeof(uint32), (uint8*)&minerRiecoinBlock.uniqueMerkleSeed, workDataSource.coinBase1Size, workDataSource.coinBase1, workDataSource.coinBase2Size, workDataSource.coinBase2, workDataSource.txHash, TX_MODE_DOUBLE_SHA256);
+				bitclient_calculateMerkleRoot(workDataSource.txHash, workDataSource.txHashCount+1, minerRiecoinBlock.merkleRoot, TX_MODE_DOUBLE_SHA256);
 				hasValidWork = true;
 				break;
 			}
@@ -379,6 +438,10 @@ int xptMiner_minerThread(int threadIndex)
 			else
 				maxcoin_process(&minerMaxcoinBlock);
 		}
+		else if( workDataSource.algorithm == ALGORITHM_RIECOIN )
+		{
+			riecoin_process(&minerRiecoinBlock);
+		}
 		else
 		{
 			printf("xptMiner_minerThread(): Unknown algorithm\n");
@@ -408,6 +471,11 @@ void xptMiner_getWorkFromXPTConnection(xptClient_t* xptClient)
 			maxcoin_init();
 			algorithmInited[xptClient->algorithm] = 1;
 		}
+		else if( xptClient->algorithm == ALGORITHM_RIECOIN && algorithmInited[xptClient->algorithm] == 0 )
+		{
+			riecoin_init();
+			algorithmInited[xptClient->algorithm] = 1;
+		}
 	}
 	workDataSource.algorithm = xptClient->algorithm;
 	workDataSource.version = xptClient->blockWorkInfo.version;
@@ -417,7 +485,8 @@ void xptMiner_getWorkFromXPTConnection(xptClient_t* xptClient)
 	memcpy(workDataSource.prevBlockHash, xptClient->blockWorkInfo.prevBlockHash, 32);
 	memcpy(workDataSource.target, xptClient->blockWorkInfo.target, 32);
 	memcpy(workDataSource.targetShare, xptClient->blockWorkInfo.targetShare, 32);
-
+	workDataSource.targetCompact = xptClient->blockWorkInfo.targetCompact;
+	workDataSource.shareTargetCompact = xptClient->blockWorkInfo.targetShareCompact;
 	workDataSource.coinBase1Size = xptClient->blockWorkInfo.coinBase1Size;
 	workDataSource.coinBase2Size = xptClient->blockWorkInfo.coinBase2Size;
 	memcpy(workDataSource.coinBase1, xptClient->blockWorkInfo.coinBase1, xptClient->blockWorkInfo.coinBase1Size);
@@ -504,6 +573,21 @@ void xptMiner_xptQueryWorkLoop()
 					}
 					printf("[%02d:%02d:%02d] kHash/s: %.2lf Shares total: %d / %d\n", (passedSeconds/3600)%60, (passedSeconds/60)%60, (passedSeconds)%60, speedRate, totalShareCount, totalShareCount-totalRejectedShareCount);
 				}
+				else if( workDataSource.algorithm == ALGORITHM_RIECOIN )
+				{
+					// speed is represented as knumber/s (in steps of 0x1000)
+					float speedRate_2ch = 0.0f;
+					float speedRate_3ch = 0.0f;
+					float speedRate_4ch = 0.0f;
+
+					if( passedSeconds > 5 )
+					{
+						speedRate_2ch = (double)total2ChainCount * 4096.0 / (double)passedSeconds / 1000.0;
+						speedRate_3ch = (double)total3ChainCount * 4096.0 / (double)passedSeconds / 1000.0;
+						speedRate_4ch = (double)total4ChainCount * 4096.0 / (double)passedSeconds / 1000.0;
+					}
+					printf("[%02d:%02d:%02d] 2ch/s: %.4lf 3ch/s: %.4lf 4ch/s: %.4lf Shares total: %d / %d\n", (passedSeconds/3600)%60, (passedSeconds/60)%60, (passedSeconds)%60, speedRate_2ch, speedRate_3ch, speedRate_4ch, totalShareCount, totalShareCount-totalRejectedShareCount);
+				}
 
 			}
 			timerPrintDetails = currentTick + 8000;
@@ -530,7 +614,7 @@ void xptMiner_xptQueryWorkLoop()
 			else
 			{
 				// is known algorithm?
-				if( xptClient->clientState == XPT_CLIENT_STATE_LOGGED_IN && (xptClient->algorithm != ALGORITHM_PROTOSHARES && xptClient->algorithm != ALGORITHM_SCRYPT && xptClient->algorithm != ALGORITHM_METISCOIN && xptClient->algorithm != ALGORITHM_MAXCOIN) )
+				if( xptClient->clientState == XPT_CLIENT_STATE_LOGGED_IN && (xptClient->algorithm != ALGORITHM_PROTOSHARES && xptClient->algorithm != ALGORITHM_SCRYPT && xptClient->algorithm != ALGORITHM_METISCOIN && xptClient->algorithm != ALGORITHM_MAXCOIN && xptClient->algorithm != ALGORITHM_RIECOIN) )
 				{
 					printf("The login is configured for an unsupported algorithm.\n");
 					printf("Make sure you miner login details are correct\n");
@@ -571,6 +655,9 @@ void xptMiner_xptQueryWorkLoop()
 				LeaveCriticalSection(&cs_xptClient);
 				printf("Connected to server using x.pushthrough(xpt) protocol\n");
 				totalCollisionCount = 0;
+				total2ChainCount = 0;
+				total3ChainCount = 0;
+				total4ChainCount = 0;
 			}
 			Sleep(1);
 		}
@@ -737,7 +824,7 @@ int main(int argc, char** argv)
 	minerSettings.protoshareMemoryMode = commandlineInput.ptsMemoryMode;
 	minerSettings.useGPU = commandlineInput.useGPU;
 	printf("\xC9\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xBB\n");
-	printf("\xBA  xptMiner (v1.5)                                 \xBA\n");
+	printf("\xBA  xptMiner (v1.6)                                 \xBA\n");
 	printf("\xBA  author: jh00                                    \xBA\n");
 	printf("\xBA  http://ypool.net                                \xBA\n");
 	printf("\xC8\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xBC\n");

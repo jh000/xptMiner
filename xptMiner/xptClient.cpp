@@ -412,6 +412,16 @@ void xptClient_sendShare(xptClient_t* xptClient, xptShareToSubmit_t* xptShareToS
 		xptPacketbuffer_writeU8(xptClient->sendBuffer, &sendError, xptShareToSubmit->userExtraNonceLength);
 		xptPacketbuffer_writeData(xptClient->sendBuffer, xptShareToSubmit->userExtraNonceData, xptShareToSubmit->userExtraNonceLength, &sendError);
 	}
+	else if( xptShareToSubmit->algorithm == ALGORITHM_RIECOIN )
+	{
+		// nOffset
+		xptPacketbuffer_writeData(xptClient->sendBuffer, xptShareToSubmit->riecoin_nOffset, 32, &sendError);
+		// original merkleroot (used to identify work)
+		xptPacketbuffer_writeData(xptClient->sendBuffer, xptShareToSubmit->merkleRootOriginal, 32, &sendError);
+		// user extra nonce (up to 16 bytes)
+		xptPacketbuffer_writeU8(xptClient->sendBuffer, &sendError, xptShareToSubmit->userExtraNonceLength);
+		xptPacketbuffer_writeData(xptClient->sendBuffer, xptShareToSubmit->userExtraNonceData, xptShareToSubmit->userExtraNonceLength, &sendError);
+	}
 	// share id (server sends this back in shareAck, so we can identify share response)
 	xptPacketbuffer_writeU32(xptClient->sendBuffer, &sendError, 0);
 	// finalize
