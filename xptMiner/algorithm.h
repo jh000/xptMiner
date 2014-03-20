@@ -17,4 +17,4 @@ void maxcoin_process(minerMaxcoinBlock_t* block);
 void maxcoin_processGPU(minerMaxcoinBlock_t* block);
 // riecoin
 void riecoin_init();
-void riecoin_process(minerRiecoinBlock_t* block);
+void riecoin_process(minerRiecoinBlock_t* block, sint32 threadIndex);

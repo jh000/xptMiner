@@ -38,7 +38,6 @@ void metiscoin_process(minerMetiscoinBlock_t* block)
 		}
 		for(uint32 f=0; f<0x8000; f += GROUPED_HASHES )
 		{
-			// todo: Generate multiple hashes for multiple nonces at once
 			block->nonce = n*0x10000+f;
 			for(uint32 i=0; i<GROUPED_HASHES; i++)
 			{
@@ -47,7 +46,7 @@ void metiscoin_process(minerMetiscoinBlock_t* block)
 			}
 			for(uint32 i=0; i<GROUPED_HASHES; i++)
 			{
-				shavite_big_core_opt(hash0+i*8, hash0+i*8);
+				shavite_big_core_opt((unsigned int*)(hash0+i*8), (unsigned int*)(hash0+i*8));
 			}
 			block->nonce = n*0x10000+f;
 			//for(uint32 i=0; i<GROUPED_HASHES; i++)

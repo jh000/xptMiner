@@ -2,13 +2,49 @@
 
 #define zeroesBeforeHashInPrime	8
 
-const uint32 riecoin_primeTestLimit = 50000;
-uint32 riecoin_primorialSizeSkip = 35;
+const uint32 riecoin_primeTestLimit = 10000000;
+uint32 riecoin_primorialIndex = 41;
 uint32* riecoin_primeTestTable;
 uint32 riecoin_primeTestSize;
+uint32* riecoin_primeInverseTable;
 
-uint32 riecoin_sieveSize = 1024*1024*1; // must be divisible by 8
-mpz_t  z_skipPrimorial;
+uint32 riecoin_sieveSize = 1024*1024*4; // must be divisible by 8 (maximum sieve size)
+mpz_t  z_primorial;
+
+void riecoin_sieveTest()
+{
+	return;
+	sint32 sieveSize = 1024*1024;
+	uint8* sieve = (uint8*)malloc((sieveSize+7)/8);
+	memset(sieve, 0x00, (sieveSize+7)/8);
+
+	// start sieving
+	sint32 primesToSieve = 35+10;
+	for(sint32 i=0; i<primesToSieve; i++)
+	{
+		sint32 p = riecoin_primeTestTable[i];
+		static sint32 tupleBias[6] = {0,4,6,10,12,16};
+		for(sint32 f=0; f<6; f++)
+		{
+			sint32 index = -tupleBias[f];
+			while( index < 0 ) index += p;
+			while( index < sieveSize )
+			{
+				sieve[index>>3] |= (1<<(index&7));
+				index += p;
+			}
+		}
+	}
+	for(sint32 i=0; i<1024*512; i++)
+	{
+		if( sieve[i>>3] & (1<<(i&7)) )
+			continue;
+		if( (i%210) == 97 )
+			printf("c[x]: %d\n", i);
+		else
+			printf("c[ ]: %d\n", i);
+	}
+}
 
 void riecoin_init()
 {
@@ -40,15 +76,32 @@ void riecoin_init()
 	// make sure sieve size is divisible by 8
 	riecoin_sieveSize = (riecoin_sieveSize&~7);
 	// generate primorial for 40
-	mpz_init_set_ui(z_skipPrimorial, riecoin_primeTestTable[0]);
-	for(uint32 i=1; i<riecoin_primorialSizeSkip; i++)
+	mpz_init_set_ui(z_primorial, riecoin_primeTestTable[0]);
+	for(uint32 i=1; i<riecoin_primorialIndex; i++)
 	{
-		mpz_mul_ui(z_skipPrimorial, z_skipPrimorial, riecoin_primeTestTable[i]);
+		mpz_mul_ui(z_primorial, z_primorial, riecoin_primeTestTable[i]);
 	}
+	// allocate space for table of inverse primes
+	riecoin_primeInverseTable = (uint32*)malloc(sizeof(uint32)*riecoin_primeTestSize);
+	memset(riecoin_primeInverseTable, 0x00, sizeof(uint32)*riecoin_primeTestSize);
+	// calculate inverse of each p primorial pair
+	mpz_t z_inv;
+	mpz_init(z_inv);
+	mpz_t z_p;
+	mpz_init(z_p);
+	for(uint32 i=riecoin_primorialIndex; i<riecoin_primeTestSize; i++)
+	{
+		mpz_set_ui(z_p, riecoin_primeTestTable[i]);
+		if( mpz_invert(z_inv, z_primorial, z_p) )
+		{
+			riecoin_primeInverseTable[i] = mpz_get_ui(z_inv);
+		}
+	}
+	mpz_clear(z_p);
+	mpz_clear(z_inv);
 }
 
 __declspec( thread ) uint8* riecoin_sieve = NULL;
-
 
 uint32 _getHexDigitValue(uint8 c)
 {
@@ -136,7 +189,7 @@ unsigned int int_invert(unsigned int a, unsigned int nPrime)
 	return (inverse + nPrime) % nPrime;
 }
 
-void riecoin_process(minerRiecoinBlock_t* block)
+void riecoin_process(minerRiecoinBlock_t* block, sint32 threadIndex)
 {
 	uint32 searchBits = block->targetCompact;
 
@@ -148,6 +201,8 @@ void riecoin_process(minerRiecoinBlock_t* block)
 		memset(riecoin_sieve, 0x00, riecoin_sieveSize/8);
 	}
 	uint8* sieve = riecoin_sieve;
+	uint32 primesToSieve = riecoin_primeTestSize;
+	uint32 sieveSize = riecoin_sieveSize;
 
 	// test data
 	// getblock 16ee31c116b75d0299dc03cab2b6cbcb885aa29adf292b2697625bc9d28b2b64
@@ -167,6 +222,8 @@ void riecoin_process(minerRiecoinBlock_t* block)
 	sha256_update(&ctx, powHash, 32);
 	sha256_final(&ctx, powHash);
 	// generatePrimeBase
+	mpz_t z_remainder;
+	mpz_init(z_remainder);
 	uint32* powHashU32 = (uint32*)powHash;
 	mpz_t z_target;
 	mpz_t z_temp;
@@ -181,11 +238,22 @@ void riecoin_process(minerRiecoinBlock_t* block)
 	}
 	unsigned int trailingZeros = searchBits - 1 - zeroesBeforeHashInPrime - 256;
 	mpz_mul_2exp(z_target, z_target, trailingZeros);
-	// find first offset where x%2310 = 97
-	uint64 remainder2310 = mpz_tdiv_ui(z_target, 2310);
-	remainder2310 = (2310-remainder2310)%2310;
-	remainder2310 += 97;
-	mpz_add_ui(z_temp, z_target, remainder2310);
+	// find first offset where x%primorial = 97
+	mpz_tdiv_r(z_remainder, z_target, z_primorial);
+	mpz_sub(z_remainder, z_primorial, z_remainder);
+	if( mpz_cmp(z_remainder, z_primorial) == 0 )
+		mpz_set_ui(z_remainder, 0);
+	mpz_add_ui(z_remainder, z_remainder, 16057);
+	// some other possible offsets:
+	//16057
+	//19417
+	//43777
+	//340927
+	//402037
+	//419047
+	//420307
+	//460627
+	mpz_add(z_temp, z_target, z_remainder);
 
 	mpz_t z_temp2;
 	mpz_init(z_temp2);
@@ -197,69 +265,142 @@ void riecoin_process(minerRiecoinBlock_t* block)
 	mpz_init(z_ft_n);
 
 	static uint32 primeTupleBias[6] = {0,4,6,10,12,16};
-	for(uint32 i=5; i<riecoin_primeTestSize; i++)
+	for(uint32 i=riecoin_primorialIndex; i<primesToSieve; i++)
 	{
-		for(uint32 f=0; f<6; f++)
-		{
-			uint32 p = riecoin_primeTestTable[i];
-			uint32 remainder = mpz_tdiv_ui(z_temp, p);//;
-			remainder += primeTupleBias[f];
-			remainder %= p;
-			uint32 index;
-			// a+b*x=0 (mod p) => b*x=p-a => x = (p-a)*modinv(b)
-			sint32 pa = (p<remainder)?(p-remainder+p):(p-remainder);
-			sint32 b = 2310;
-			index = (pa%p)*int_invert(b, p);
-			index %= p;
-			while(index < riecoin_sieveSize)
-			{
-				sieve[(index)>>3] |= (1<<((index)&7));
-				index += p;
-			}
-		}
-		
-	}
+		if( block->height != monitorCurrentBlockHeight )
+			break;
+		sint64 p = riecoin_primeTestTable[i];
+		sint32 pRemainder = mpz_tdiv_ui(z_temp, p);
+		sint64 remainder = pRemainder;
+		sint64 pa;
+		// p1
+		remainder += 0;
+		remainder %= p;
+		pa = (p<remainder)?(p-remainder+p):(p-remainder);
+		sint64 index1 = ((sint64)pa*(sint64)riecoin_primeInverseTable[i])%p;
+		// p2
+		remainder += 4;
+		remainder %= p;
+		pa = (p<remainder)?(p-remainder+p):(p-remainder);
+		sint64 index2 = ((sint64)pa*(sint64)riecoin_primeInverseTable[i])%p;
+		// p3
+		remainder += 2;
+		remainder %= p;
+		pa = (p<remainder)?(p-remainder+p):(p-remainder);
+		sint64 index3 = ((sint64)pa*(sint64)riecoin_primeInverseTable[i])%p;
+		// p4
+		remainder += 4;
+		remainder %= p;
+		pa = (p<remainder)?(p-remainder+p):(p-remainder);
+		sint64 index4 = ((sint64)pa*(sint64)riecoin_primeInverseTable[i])%p;
+		// p5
+		remainder += 2;
+		remainder %= p;
+		pa = (p<remainder)?(p-remainder+p):(p-remainder);
+		sint64 index5 = ((sint64)pa*(sint64)riecoin_primeInverseTable[i])%p;
+		// p6
+		remainder += 4;
+		remainder %= p;
+		pa = (p<remainder)?(p-remainder+p):(p-remainder);
+		sint64 index6 = ((sint64)pa*(sint64)riecoin_primeInverseTable[i])%p;
 
-	uint32 countCandidates = 0;
-	uint32 countPrimes = 0;
-	uint32 countPrimes2 = 0;
+		for(uint32 f=0; f<6; f++)
+			{
+				sint64 remainder = pRemainder;
+				remainder += primeTupleBias[f];
+				remainder %= p;
+				sint64 index;
+				// a+b*x=0 (mod p) => b*x=p-a => x = (p-a)*modinv(b)
+				sint64 pa = (p<remainder)?(p-remainder+p):(p-remainder);
+				index = ((sint64)pa*(sint64)riecoin_primeInverseTable[i])%p;
+				while(index < riecoin_sieveSize)
+				{
+					sieve[(index)>>3] |= (1<<((index)&7));
+					index += p;
+				}
+			}		
+	}
+	if( block->height != monitorCurrentBlockHeight )
+		return;
 	// scan for candidates
-	for(uint32 i=1; i<riecoin_sieveSize; i++)
+	for(uint32 i=1; i<sieveSize; i++)
 	{
 		if( sieve[(i)>>3] & (1<<((i)&7)) )
 			continue;
-		countCandidates++;
-		// test the first 4 numbers for being prime (5th and 6th is checked server side)
+		if( block->height != monitorCurrentBlockHeight )
+			break;
 		// we use fermat test as it is slightly faster for virtually the same accuracy
+		mpz_add(z_temp, z_target, z_remainder);
+		mpz_addmul_ui(z_temp, z_primorial, i);
 		// p1
-		mpz_add_ui(z_temp, z_target, (uint64)remainder2310 + 2310ULL*(uint64)i);
+		sint32 validPrimes = 0;
+		bool allPrimes = true;
 		mpz_sub_ui(z_ft_n, z_temp, 1);
 		mpz_powm(z_ft_r, z_ft_b, z_ft_n, z_temp);
-		if (mpz_cmp_ui(z_ft_r, 1) != 0)
-			continue;
+		if (mpz_cmp_ui(z_ft_r, 1) == 0)
+			validPrimes++;
 		else
-			countPrimes++;
+			allPrimes = false;
 		// p2
 		mpz_add_ui(z_temp, z_temp, 4);
 		mpz_sub_ui(z_ft_n, z_temp, 1);
 		mpz_powm(z_ft_r, z_ft_b, z_ft_n, z_temp);
-		if (mpz_cmp_ui(z_ft_r, 1) != 0)
-			continue;
+		if (mpz_cmp_ui(z_ft_r, 1) == 0)
+			validPrimes++;
 		else
-			countPrimes2++;
-		total2ChainCount++;
+			allPrimes = false;
+		if( allPrimes )
+			total2ChainCount++;
 		// p3
 		mpz_add_ui(z_temp, z_temp, 2);
-		if( mpz_probab_prime_p(z_temp, 1) == 0 )
+		mpz_sub_ui(z_ft_n, z_temp, 1);
+		mpz_powm(z_ft_r, z_ft_b, z_ft_n, z_temp);
+		if (mpz_cmp_ui(z_ft_r, 1) == 0)
+			validPrimes++;
+		else
+			allPrimes = false;
+		if( validPrimes < 1 )
 			continue;
-		total3ChainCount++;
+		if( allPrimes )
+			total3ChainCount++;
 		// p4
 		mpz_add_ui(z_temp, z_temp, 4);
-		if( mpz_probab_prime_p(z_temp, 1) == 0 )
-			continue;
-		total4ChainCount++;
+		mpz_sub_ui(z_ft_n, z_temp, 1);
+		mpz_powm(z_ft_r, z_ft_b, z_ft_n, z_temp);
+		if (mpz_cmp_ui(z_ft_r, 1) == 0)
+			validPrimes++;
+		else
+			allPrimes = false;
+		if( validPrimes < 2 )
+			continue;	
+		if( allPrimes )
+			total4ChainCount++;
+		// p5
+		if( validPrimes < 4 )
+		{
+			mpz_add_ui(z_temp, z_temp, 2);
+			mpz_sub_ui(z_ft_n, z_temp, 1);
+			mpz_powm(z_ft_r, z_ft_b, z_ft_n, z_temp);
+			if (mpz_cmp_ui(z_ft_r, 1) == 0)
+				validPrimes++;
+			if( validPrimes < 3 )
+				continue;	
+		}
+		// p6
+		if( validPrimes < 4 )
+		{
+			mpz_add_ui(z_temp, z_temp, 4);
+			mpz_sub_ui(z_ft_n, z_temp, 1);
+			mpz_powm(z_ft_r, z_ft_b, z_ft_n, z_temp);
+			if (mpz_cmp_ui(z_ft_r, 1) == 0)
+				validPrimes++;
+		}
+		if( validPrimes < 4 )
+			continue;	
 		// calculate offset
-		mpz_add_ui(z_temp, z_target, (uint64)remainder2310 + 2310ULL*(uint64)i);
+		//mpz_add_ui(z_temp, z_target, (uint64)remainder2310 + 2310ULL*(uint64)i);
+		mpz_add(z_temp, z_target, z_remainder);
+		mpz_addmul_ui(z_temp, z_primorial, i);
 		mpz_sub(z_temp2, z_temp, z_target);
 		// submit share
 		uint8 nOffset[32];
@@ -278,4 +419,13 @@ void riecoin_process(minerRiecoinBlock_t* block)
 		totalShareCount++;
 		xptMiner_submitShare(block, nOffset);
 	}
+	totalSieveCount++;
+	// clean up
+	mpz_clear(z_remainder);
+	mpz_clear(z_temp);
+	mpz_clear(z_target);
+	mpz_clear(z_temp2);
+	mpz_clear(z_ft_r);
+	mpz_clear(z_ft_b);
+	mpz_clear(z_ft_n);
 }

@@ -3,7 +3,7 @@
 #define MAX_TRANSACTIONS	(4096)
 
 // miner version string (for pool statistic)
-char* minerVersionString = "xptMiner 1.6";
+char* minerVersionString = "xptMiner 1.7c";
 
 minerSettings_t minerSettings = {0};
 
@@ -19,6 +19,7 @@ volatile uint32 totalRejectedShareCount = 0;
 volatile uint32 total2ChainCount = 0;
 volatile uint32 total3ChainCount = 0;
 volatile uint32 total4ChainCount = 0;
+volatile uint32 totalSieveCount = 0;
 
 
 struct  
@@ -440,7 +441,7 @@ int xptMiner_minerThread(int threadIndex)
 		}
 		else if( workDataSource.algorithm == ALGORITHM_RIECOIN )
 		{
-			riecoin_process(&minerRiecoinBlock);
+			riecoin_process(&minerRiecoinBlock, threadIndex);
 		}
 		else
 		{
@@ -575,18 +576,19 @@ void xptMiner_xptQueryWorkLoop()
 				}
 				else if( workDataSource.algorithm == ALGORITHM_RIECOIN )
 				{
-					// speed is represented as knumber/s (in steps of 0x1000)
+					// speed is represented as ch/s
 					float speedRate_2ch = 0.0f;
 					float speedRate_3ch = 0.0f;
 					float speedRate_4ch = 0.0f;
-
+					float speedRate_sps = 0.0f;
 					if( passedSeconds > 5 )
 					{
-						speedRate_2ch = (double)total2ChainCount * 4096.0 / (double)passedSeconds / 1000.0;
-						speedRate_3ch = (double)total3ChainCount * 4096.0 / (double)passedSeconds / 1000.0;
-						speedRate_4ch = (double)total4ChainCount * 4096.0 / (double)passedSeconds / 1000.0;
+						speedRate_2ch = (double)total2ChainCount / (double)passedSeconds;
+						speedRate_3ch = (double)total3ChainCount / (double)passedSeconds;
+						speedRate_4ch = (double)total4ChainCount / (double)passedSeconds;
+						speedRate_sps = (double)totalSieveCount / (double)passedSeconds;
 					}
-					printf("[%02d:%02d:%02d] 2ch/s: %.4lf 3ch/s: %.4lf 4ch/s: %.4lf Shares total: %d / %d\n", (passedSeconds/3600)%60, (passedSeconds/60)%60, (passedSeconds)%60, speedRate_2ch, speedRate_3ch, speedRate_4ch, totalShareCount, totalShareCount-totalRejectedShareCount);
+					printf("[%02d:%02d:%02d] 2ch/s: %.4lf 3ch/s: %.4lf 4ch/s: %.4lf sps: %.2lf Shares: %d / %d\n", (passedSeconds/3600)%60, (passedSeconds/60)%60, (passedSeconds)%60, speedRate_2ch, speedRate_3ch, speedRate_4ch, speedRate_sps, totalShareCount, totalShareCount-totalRejectedShareCount);
 				}
 
 			}
@@ -808,7 +810,6 @@ void xptMiner_parseCommandline(int argc, char **argv)
 	}
 }
 
-
 int main(int argc, char** argv)
 {
 	commandlineInput.host = "ypool.net";
@@ -823,8 +824,9 @@ int main(int argc, char** argv)
 	xptMiner_parseCommandline(argc, argv);
 	minerSettings.protoshareMemoryMode = commandlineInput.ptsMemoryMode;
 	minerSettings.useGPU = commandlineInput.useGPU;
+	minerSettings.threadCount = commandlineInput.numThreads;
 	printf("\xC9\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xBB\n");
-	printf("\xBA  xptMiner (v1.6)                                 \xBA\n");
+	printf("\xBA  xptMiner (v1.7)                                 \xBA\n");
 	printf("\xBA  author: jh00                                    \xBA\n");
 	printf("\xBA  http://ypool.net                                \xBA\n");
 	printf("\xC8\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xBC\n");
@@ -865,7 +867,7 @@ int main(int argc, char** argv)
 	minerSettings.requestTarget.authPass = commandlineInput.workerpass;
 	// start miner threads
 	for(uint32 i=0; i<commandlineInput.numThreads; i++)
-		CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)xptMiner_minerThread, (LPVOID)0, 0, NULL);
+		CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)xptMiner_minerThread, (LPVOID)i, 0, NULL);
 	// enter work management loop
 	xptMiner_xptQueryWorkLoop();
 	return 0;
