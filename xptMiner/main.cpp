@@ -529,6 +529,17 @@ xptClient_t* xptMiner_initateNewXptConnectionObject()
 	// the fee base is always calculated from 100% of the share value
 	// for example if you setup two fee entries with 3% and 2%, the total subtracted share value will be 5%
 	//xptClient_addDeveloperFeeEntry(xptClient, "Ptbi961RSBxRqNqWt4khoNDzZQExaVn7zL", getFeeFromDouble(0.5)); // 0.5% fee (jh00, for testing)
+
+	// The developer fee address is automatically converted by the pool if a different coin is mined
+	// e.g. your PTS dev-fee address will turn into a NRS address when mining NRS
+	// this way you can use one private key/wallet address to receive developer fee on multiple coins (even when the PoW is different)
+	// Steps necessary to import private key into different wallet:
+	// 1) dump private key of your fee address (dumpprivkey <address>)
+	// 2) call function xptClient_convertPrivateKeyWIF() with your private key as the first parameter (can be called from anywhere)
+	// 3) run miner and write down output of function
+	// 4) import converted private keys into corresponding wallets
+	// example call:
+	// xptClient_convertPrivateKeyWIF("PSUrjT1jKoi4kSTKH2DUzxvicMTZTivoqx2MrshuGupKLrFh8u22", false);
 	return xptClient;
 }
 

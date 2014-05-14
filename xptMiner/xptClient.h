@@ -70,6 +70,7 @@ typedef struct
 xptClient_t* xptClient_create();
 bool xptClient_connect(xptClient_t* xptClient, generalRequestTarget_t* target);
 void xptClient_addDeveloperFeeEntry(xptClient_t* xptClient, char* walletAddress, uint16 integerFee, bool isMaxCoinAddress);
+void xptClient_convertPrivateKeyWIF(char* wifPrivateKey, bool isMaxCoinAddress);
 void xptClient_free(xptClient_t* xptClient);
 void xptClient_forceDisconnect(xptClient_t* xptClient);
 

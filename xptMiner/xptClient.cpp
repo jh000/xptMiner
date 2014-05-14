@@ -297,6 +297,124 @@ void xptClient_addDeveloperFeeEntry(xptClient_t* xptClient, char* walletAddress,
 	xptClient->developerFeeCount++;
 }
 
+static const char* pszBase58 = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
+
+// Encode a byte sequence as a base58-encoded string
+void encodeBase58(const uint8* pbytes, sint32 length, char* strOut, sint32* strOutLength)
+{
+	mpz_t bn;
+	mpz_init(bn);
+	for(sint32 i=0; i<length; i++)
+	{
+		mpz_mul_2exp(bn, bn, 8);
+		//mpz_add_ui(bn, bn, pbytes[length-1-i]);
+		mpz_add_ui(bn, bn, pbytes[i]);
+	}
+	mpz_t remTmp;
+	mpz_init(remTmp);
+	*strOutLength = 0;
+	while( mpz_cmp_ui(bn, 0) )
+	{
+		uint32 rem = mpz_fdiv_r_ui(remTmp, bn, 58);
+		mpz_fdiv_q_ui(bn, bn, 58);
+		unsigned int c = rem;
+		strOut[*strOutLength] = pszBase58[c];
+		(*strOutLength)++;
+	}
+	// Leading zeroes are encoded as base58 zeros
+	for(sint32 i=0; i<length; i++)
+	{
+		if( pbytes[i] != 0 )
+			break;
+		strOut[*strOutLength] = pszBase58[0];
+		(*strOutLength)++;
+	}
+	// Convert little endian string to big endian
+	sint32 revLen = (*strOutLength);
+	for(sint32 i=0; i<revLen/2; i++)
+	{
+		uint8 tmp = strOut[i];
+		strOut[i] = strOut[revLen-i-1];
+		strOut[revLen-i-1] = tmp;
+	}
+	strOut[revLen] = '\0';
+	// cleanup
+	mpz_clear(bn);
+	mpz_clear(remTmp);
+}
+
+typedef struct  
+{
+	uint8 prefixByte;
+	char* name;
+	bool isMaxcoinAddress;
+}wifConverterEntry_t;
+
+wifConverterEntry_t wifTable[] =
+{
+	{184, "Bitshares PTS", false},
+	{149, "NoirShares", false},
+	{151, "Primecoin", false},
+	{128, "Riecoin", false},
+};
+
+/*
+ * Simple utility method to convert your private key from one wallet format to another
+ * Use this method if you need to access your dev-fee on a different coin (e.g. XPM dev address will work with PTS)
+ */
+void xptClient_convertPrivateKeyWIF(char* wifPrivateKey, bool isMaxCoinAddress)
+{
+	uint8 wifRawData[256];
+	uint8* wifRaw = wifRawData;
+	sint32 wifRawLength = sizeof(wifRaw);
+	if( xptClient_decodeBase58(wifPrivateKey, strlen(wifPrivateKey), wifRaw, &wifRawLength) == false )
+	{
+		printf("xptClient_convertPrivateKeyWIF(): Failed to decode wallet private key (WIF)\n");
+		return;
+	}
+	printf("Input private key:\n%s\n\n", wifPrivateKey);
+	// workaround for a little bug where the address
+	// is decoded wrong and starts with a "00" byte
+	if( wifRaw[0] == 0 )
+	{
+		wifRaw++;
+		wifRawLength--;
+	}
+	for(sint32 i=0; i<sizeof(wifTable)/sizeof(wifTable[0]); i++)
+	{
+		// update prefix byte
+		wifRaw[0] = wifTable[i].prefixByte;
+		// calculate and update checksum
+		uint8 addressHash[32];
+		if( wifTable[i].isMaxcoinAddress )
+		{
+			// MaxCoin uses Keccak for wallet address checksum
+			sph_keccak256_context keccak256_ctx;
+			sph_keccak256_init(&keccak256_ctx);
+			sph_keccak256(&keccak256_ctx, wifRaw, wifRawLength-4);
+			sph_keccak256_close(&keccak256_ctx, addressHash);
+		}
+		else
+		{
+			sha256_ctx s256c;
+			sha256_init(&s256c);
+			sha256_update(&s256c, wifRaw, wifRawLength-4);
+			sha256_final(&s256c, addressHash);
+			sha256_init(&s256c);
+			sha256_update(&s256c, addressHash, 32);
+			sha256_final(&s256c, addressHash);
+		}
+		*(uint32*)(wifRaw+wifRawLength-4) = *(uint32*)addressHash;
+		// encode and print
+		char encodedStr[1024];
+		sint32 encodedStrLength = 0;
+		encodeBase58(wifRaw, wifRawLength, encodedStr, &encodedStrLength);
+		printf("Converted to %s:\n", wifTable[i].name);
+		printf("%s", encodedStr);
+		puts("");
+	}
+	while( true ) ; // freeze program
+}
 
 /*
  * Bitcoin's .setCompact() method without Bignum dependency
